@@ -11,5 +11,3 @@ def get_black_white_img():
             sr = (r+g+b)//3  # Get average value of RGB
             draw.point((x, y), (sr, sr, sr))  # Point this pixel
     image.save('res.jpg', "JPEG")  # Save out image
-
-
