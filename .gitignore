@@ -1,4 +1,8 @@
 __pycache__
+bin
+setup.py
+351230882.json
+Sesorov_bot.py
 *.pyc
 tmp
 .idea
