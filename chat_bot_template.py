@@ -7,10 +7,13 @@ import os
 import requests
 import telegram
 import time
+import pandas as pd
+import csv
+from bs4 import BeautifulSoup
 import image_handler as img_h
 
 from setup import PROXY, TOKEN
-from telegram import Bot, Update
+from telegram import Bot, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
 
 # Enable logging
@@ -23,7 +26,7 @@ USERS_ACTION = []
 ACTION_COUNT = 0
 
 bot = Bot(
-    token="895548858:AAHWTesxKmd6rpC3P4u6QJejsordITl3cYU",
+    token="1114504091:AAHuB_E7EKQIA6ysmfrlWKDX_EQ8NbetGuc",
     base_url=PROXY,  # delete it if connection via VPN
 )
 # Define a few command handlers. These usually take the two arguments update and
@@ -54,7 +57,7 @@ def start(update: Update, context: CallbackContext):
     try:
         load_history(update)
     except FileNotFoundError:
-        f = open(f"{update.message.chat.id}.json", "w+")
+        open(f"{update.message.chat.id}.json", "w+")
     update.message.reply_text(f'Привет, {update.effective_user.first_name}!')
 
 
@@ -126,7 +129,7 @@ def get_image(update: Update, context: CallbackContext):
     image = bot.get_file(file)
     image.download('initial.jpg')
     custom_keyboard = [
-        ["/example"]
+        ["/black&white"]
     ]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
     bot.send_message(chat_id=update.message.chat_id,
@@ -154,6 +157,30 @@ def handle_img_blk_wht(update: Update, context: CallbackContext):
     img_h.get_black_white_img()
 
 
+@handle_command
+def corona_stat(update: Update, context: CallbackContext):
+    response = requests.get(
+        'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
+    soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
+    main_data_frame = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2])  # Get last csv
+    last_data_frame = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2])  # Get last csv
+    previous_data_frame = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3])  # Get previous csv
+    last_data_frame = last_data_frame.dropna()  # Delete all the NAN entries
+    previous_data_frame = previous_data_frame.dropna()  # Delete all the NAN entries
+
+    res_data_frame = last_data_frame['Confirmed'].subtract(previous_data_frame['Confirmed']) # Subtract previous sicks
+    res_data_frame = res_data_frame.sort_values().dropna()[:-6:-1]  # Sort values confirmed
+    for province in res_data_frame.index:
+        update.message.reply_text(main_data_frame['Province/State'][province]) # Sent out user
+
+
+def get_data_frame(last_csv_url):
+    response = requests.get("https://github.com/" + last_csv_url.find('a').get('href'))  # Open github page with csv
+    csv_html = BeautifulSoup(response.content, 'lxml')
+    csv_url = (csv_html.find('a', {'class': 'btn btn-sm BtnGroup-item'})).get('href')
+    return pd.read_csv("https://github.com/" + csv_url)  # Open our csv file with pandas
+
+
 def main():
     updater = Updater(bot=bot, use_context=True)
 
@@ -161,8 +188,9 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('help', chat_help))
     updater.dispatcher.add_handler(CommandHandler('history', history))
+    updater.dispatcher.add_handler(CommandHandler('corona_stat', corona_stat))
     updater.dispatcher.add_handler(CommandHandler('fact', fact))
-    updater.dispatcher.add_handler(CommandHandler('example', handle_img_blk_wht))
+    updater.dispatcher.add_handler(CommandHandler('black_white', handle_img_blk_wht))
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, get_image))
 
     # on noncommand i.e message - echo the message on Telegram
