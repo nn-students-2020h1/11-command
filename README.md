@@ -9,11 +9,12 @@ This is a repository for Telegram bot that will be developed by 11th team during
  - [Bugs](#bugs--issues)
  - [Pull Requests](#pull-requests)
 - [Credits](#credits)
+- [Set up](#Set-up-Python-environment)
 
 ## Search
 
 1. Open Telegram
-2. Search for `БОТ_НЕЙМ` bot.
+2. Search for `ВСТАВЬТЕ ПЖ ИМЕНА СВОИХ БОТОВ` bot.
 3. Click `Start bot`.
 
 ## Features
@@ -22,6 +23,8 @@ This is a repository for Telegram bot that will be developed by 11th team during
 * `/help`- receive some instructions about the bot;
 * `/history` - get your 5 last actions;
 * `/fact` - get the most upvoted fact about cats;
+* `/example` - get the example of image processing
+* `/corona_stats` - get the last coronavirus statistics
 
 ## Support
 

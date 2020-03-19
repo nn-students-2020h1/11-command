@@ -26,9 +26,11 @@ USERS_ACTION = []
 ACTION_COUNT = 0
 
 bot = Bot(
-    token="1114504091:AAHuB_E7EKQIA6ysmfrlWKDX_EQ8NbetGuc",
+    token=TOKEN,
     base_url=PROXY,  # delete it if connection via VPN
 )
+
+
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
 
@@ -55,10 +57,11 @@ def handle_command(func):
 def start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     try:
-        load_history(update)
+        load_history(update)  # if file exists, load history (update for getting user ID)
     except FileNotFoundError:
-        open(f"{update.message.chat.id}.json", "w+")
-    update.message.reply_text(f'Привет, {update.effective_user.first_name}!')
+        open(f"{update.message.chat.id}.json", "w+")  # if file doesn't exist, create it for a new user
+    update.message.reply_text(f'Hi, {update.effective_user.first_name}!')
+    update.message.reply_text('Please, type <b>/help</b> to see the list of commands.', parse_mode=telegram.ParseMode.HTML)
 
 
 @handle_command
@@ -69,7 +72,9 @@ def chat_help(update: Update, context: CallbackContext):
                               "<b>/help</b> to get list of commands\n" +
                               "<b>/history</b> to get your 5 last actions\n" +
                               "<b>/fact</b> to get the top fact from cat-fact\n" +
-                              "<b>/example</b> to see an example of image processing.", parse_mode=telegram.ParseMode.HTML)
+                              "<b>/black_white</b> to transform your image into black & white\n" +
+                              "<b>/corona_stat</b> to see 5 top provinces by new coronavirus cases",
+                              parse_mode=telegram.ParseMode.HTML)
 
 
 @handle_command
@@ -79,16 +84,16 @@ def echo(update: Update, context: CallbackContext):
 
 
 def save_history(update: Update):
-    with open(f"{update.message.chat.id}.json", mode="w", encoding="utf-8") as handle:
-        json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)
+    with open(f"{update.message.chat.id}.json", mode="w", encoding="utf-8") as handle:  # opening file named user ID
+        json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
 
 
 def load_history(update: Update):
     global USERS_ACTION
     if os.stat(f"{update.message.chat.id}.json").st_size == 0:
         return
-    with open(f"{update.message.chat.id}.json", mode="r", encoding="utf-8") as handle:
-        USERS_ACTION = json.load(handle)
+    with open(f"{update.message.chat.id}.json", mode="r", encoding="utf-8") as handle:  # opening file named user ID
+        USERS_ACTION = json.load(handle)  # getting the user actions from file
 
 
 @handle_command
@@ -108,6 +113,7 @@ def history(update: Update, context: CallbackContext):
 
 @handle_command
 def fact(update: Update, context: CallbackContext):
+    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     fact = requests.get("https://cat-fact.herokuapp.com/facts").json()["all"][0]
     quote = f"<i>{fact['text']}</i>"
     author = f"<b>Author: {fact['user']['name']['first']} {fact['user']['name']['last']}</b>"
@@ -129,11 +135,11 @@ def get_image(update: Update, context: CallbackContext):
     image = bot.get_file(file)
     image.download('initial.jpg')
     custom_keyboard = [
-        ["/black&white"]
+        ["/black_white"]
     ]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
     bot.send_message(chat_id=update.message.chat_id,
-                     text="You need to choice any method",
+                     text="Choose filter",
                      reply_markup=reply_markup)
 
 
@@ -142,6 +148,7 @@ def handle_image(func):
         This function uploading image for user and calling image handler method"""
 
     def inner(*args, **kwargs):
+        bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.UPLOAD_PHOTO)
         update = args[0]
         update.message.reply_text("Processing...")
         func(*args, **kwargs)
@@ -159,6 +166,7 @@ def handle_img_blk_wht(update: Update, context: CallbackContext):
 
 @handle_command
 def corona_stat(update: Update, context: CallbackContext):
+    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     response = requests.get(
         'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
     soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
@@ -168,10 +176,15 @@ def corona_stat(update: Update, context: CallbackContext):
     last_data_frame = last_data_frame.dropna()  # Delete all the NAN entries
     previous_data_frame = previous_data_frame.dropna()  # Delete all the NAN entries
 
-    res_data_frame = last_data_frame['Confirmed'].subtract(previous_data_frame['Confirmed']) # Subtract previous sicks
+    res_data_frame = last_data_frame['Confirmed'].subtract(previous_data_frame['Confirmed'])  # Subtract previous sicks
     res_data_frame = res_data_frame.sort_values().dropna()[:-6:-1]  # Sort values confirmed
+    update.message.reply_text('Top 5 provinces by new infected:')
+    place = 1
     for province in res_data_frame.index:
-        update.message.reply_text(main_data_frame['Province/State'][province]) # Sent out user
+        update.message.reply_text(f"<b>{place}. {main_data_frame['Province/State'][province]}</b> "
+                                  f"with {int(res_data_frame.pop(province))} new cases",
+                                  parse_mode=telegram.ParseMode.HTML)  # Sent out user
+        place += 1
 
 
 def get_data_frame(last_csv_url):
