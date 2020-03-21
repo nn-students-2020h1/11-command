@@ -4,3 +4,5 @@ PIL
 pandas
 bs4
 lxml
+folium
+geopy
