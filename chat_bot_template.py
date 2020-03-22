@@ -9,6 +9,8 @@ import telegram
 import time
 import pandas as pd
 import csv
+import folium
+from geopy.geocoders import Nominatim
 from bs4 import BeautifulSoup
 import image_handler as img_h
 
@@ -166,25 +168,32 @@ def handle_img_blk_wht(update: Update, context: CallbackContext):
 
 @handle_command
 def corona_stat(update: Update, context: CallbackContext):
-    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    geolocator = Nominatim(user_agent="specify_your_app_name_here")
     response = requests.get(
         'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
     soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
-    main_data_frame = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2])  # Get last csv
-    last_data_frame = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2])  # Get last csv
-    previous_data_frame = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3])  # Get previous csv
-    last_data_frame = last_data_frame.dropna()  # Delete all the NAN entries
-    previous_data_frame = previous_data_frame.dropna()  # Delete all the NAN entries
+    last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
+    previous_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()# Get previous csv
+    previous_df = previous_df.sort_values(by=['Province/State'])
+    previous_df = previous_df.drop(['Country/Region', 'Last Update', 'Deaths', 'Recovered'], axis=1)
+    last_df = last_df.drop(['Country/Region', 'Last Update', 'Deaths', 'Recovered'], axis=1)
+    last_df = last_df.sort_values(by=['Province/State'])
+    result = last_df.set_index('Province/State').subtract(previous_df.set_index('Province/State'))
+    result = result.loc[(result['Confirmed'] > 0)]
+    for province in result.sort_values(by=['Confirmed']).dropna().index[:-6:-1]:
+        update.message.reply_text(f"{province}")
+    maps = folium.Map(location=[43.01093752182322, 11.903098859375019], zoom_start=2.4, tiles='Stamen Terrain')
+    update.message.reply_text("Your map are processing.Please, wait")
+    for i in result.index.dropna():
+        try:
 
-    res_data_frame = last_data_frame['Confirmed'].subtract(previous_data_frame['Confirmed'])  # Subtract previous sicks
-    res_data_frame = res_data_frame.sort_values().dropna()[:-6:-1]  # Sort values confirmed
-    update.message.reply_text('Top 5 provinces by new infected:')
-    place = 1
-    for province in res_data_frame.index:
-        update.message.reply_text(f"<b>{place}. {main_data_frame['Province/State'][province]}</b> "
-                                  f"with {int(res_data_frame.pop(province))} new cases",
-                                  parse_mode=telegram.ParseMode.HTML)  # Sent out user
-        place += 1
+            location = geolocator.geocode(i)
+            folium.Marker(location=[location.latitude, location.longitude],
+                          popup=f"{i} new confirmed: {result['Confirmed'][i]}",
+                          icon=folium.Icon(color='red', icon='info-sign')).add_to(maps)
+        except:
+            maps.save('map.html')
+    bot.send_document(chat_id=update.message.chat_id, document=open("map.html", mode='rb'))
 
 
 def get_data_frame(last_csv_url):
