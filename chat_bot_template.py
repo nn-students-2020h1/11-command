@@ -225,38 +225,44 @@ def handle_contrast(update: Update, context: CallbackContext):
 @handle_command
 def corona_stat(update: Update, context: CallbackContext):
     bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-    geolocator = Nominatim(user_agent="specify_your_app_name_here")
     response = requests.get(
         'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
     soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
     update.message.reply_text('Top 5 provinces by new infected:')
-    last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
-    previous_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()  # Get previous csv
-    previous_df = previous_df.sort_values(by=['Province/State'])
-    previous_df = previous_df.drop(['Country/Region', 'Last Update', 'Deaths', 'Recovered'], axis=1)
-    last_df = last_df.drop(['Country/Region', 'Last Update', 'Deaths', 'Recovered'], axis=1)
-    last_df = last_df.sort_values(by=['Province/State'])
-    result = last_df.set_index('Province/State').subtract(previous_df.set_index('Province/State'))
-    result = result.loc[(result['Confirmed'] > 0)]
-
+    last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-5]).dropna()  # Get last csv
+    prev_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-6]).dropna()  # Get previous csv
+    last_df = last_df.sort_values(by=['Province/State']).reset_index(drop=True)  # Reset all indexes
+    prev_df = prev_df.append(last_df[~last_df['Province/State'].isin(prev_df['Province/State'])])
+    prev_df = prev_df.sort_values(by=['Province/State']).reset_index(drop=True)
+    last_df['Confirmed'] = last_df['Confirmed'] - prev_df['Confirmed']  # Get count confirmed
+    last_df.loc[last_df['Confirmed'] < 0] *= -1  # If new entry, it'll be less than zero, 'cause we need to change it
+    last_df = last_df[last_df['Confirmed'] > 0]
+    last_df = last_df.sort_values(by=['Confirmed'], ascending=False)
     place = 1
-    for province in result.sort_values(by=['Confirmed']).dropna().index[:-6:-1]:
-        update.message.reply_text(f"<b>{place}. {province}</b>" +
-                                  f" with {np.floor(result.at[province, 'Confirmed'])} cases",
-                                  parse_mode=telegram.ParseMode.HTML)
+    for i in last_df.index[:5]:
+        if last_df['Province/State'][i] != '':
+            update.message.reply_text(f"<b>{place}</b>"
+                                      f" {last_df['Province/State'][i]} - {last_df['Confirmed'][i]}",
+                                      parse_mode=telegram.ParseMode.HTML)
         place += 1
 
     maps = folium.Map(location=[43.01093752182322, 11.903098859375019], zoom_start=2.4, tiles='Stamen Terrain')
+    """Making map"""
     update.message.reply_text("Your map is processing. Please, wait...")
-    for i in result.index.dropna():
+    for i in last_df.index.dropna():
         try:
-
-            location = geolocator.geocode(i)
-            folium.Marker(location=[location.latitude, location.longitude],
-                          popup=f"{i} new confirmed: {result['Confirmed'][i]}",
-                          icon=folium.Icon(color='red', icon='info-sign')).add_to(maps)
+            if last_df['Confirmed'][i] > 1000:
+                color = 'red'
+            elif 100 < last_df['Confirmed'][i] < 1000:
+                color = 'orange'
+            else:
+                color = 'green'
+            folium.Marker(location=[last_df['Latitude'][i], last_df['Longitude'][i]],
+                          popup=f"{last_df['Province/State'][i]}:{last_df['Confirmed'][i]}",
+                          icon=folium.Icon(color=color, icon='info-sign')).add_to(maps)
         except:
             maps.save('map.html')
+    maps.save('map.html')
     bot.send_document(chat_id=update.message.chat_id, document=open("map.html", mode='rb'))
 
 
