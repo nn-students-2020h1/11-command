@@ -15,8 +15,9 @@ from bs4 import BeautifulSoup
 import image_handler as img_h
 
 from setup import PROXY, TOKEN
-from telegram import Bot, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
+from telegram import Bot, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import ParseMode
+from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, CallbackQueryHandler
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,6 +32,12 @@ bot = Bot(
     token=TOKEN,
     base_url=PROXY,  # delete it if connection via VPN
 )
+
+CALLBACK_BUTTON_01 = "callback_increase_01"
+CALLBACK_BUTTON_05 = "callback_increase_05"
+CALLBACK_BUTTON_m01 = "callback_decrease_01"
+CALLBACK_BUTTON_m05 = "callback_decrease_05"
+CALLBACK_BUTTON_FIN = "callback_finish"
 
 
 # Define a few command handlers. These usually take the two arguments update and
@@ -137,7 +144,8 @@ def get_image(update: Update, context: CallbackContext):
     image = bot.get_file(file)
     image.download('initial.jpg')
     custom_keyboard = [
-        ["/black_white"]
+        ["/black_white"],
+        ["/contrast"]
     ]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
     bot.send_message(chat_id=update.message.chat_id,
@@ -150,8 +158,8 @@ def handle_image(func):
         This function uploading image for user and calling image handler method"""
 
     def inner(*args, **kwargs):
-        bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.UPLOAD_PHOTO)
         update = args[0]
+        bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.UPLOAD_PHOTO)
         update.message.reply_text("Processing...")
         func(*args, **kwargs)
         bot.send_photo(chat_id=update.message.chat_id, photo=open("res.jpg", mode='rb'))
@@ -160,6 +168,45 @@ def handle_image(func):
     return inner
 
 
+def get_inline_contrast_keyboard():
+    """Get custom inline keyboard for modifying contrast of an image"""
+    keyboard = [
+        [
+            InlineKeyboardButton("+0.1", callback_data=CALLBACK_BUTTON_01),
+            InlineKeyboardButton("+0.5", callback_data=CALLBACK_BUTTON_05)
+        ],
+        [
+            InlineKeyboardButton("-0.1", callback_data=CALLBACK_BUTTON_01),
+            InlineKeyboardButton("-0.5", callback_data=CALLBACK_BUTTON_01)
+        ],
+        [
+            InlineKeyboardButton("PERFECT!", callback_data=CALLBACK_BUTTON_FIN)
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def handle_keyboard_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    data = query.data
+    chat_id = update.effective_message.chat_id
+
+    if data == CALLBACK_BUTTON_01:
+        img_h.get_contrast_img(0.1, 'initial.jpg', 'initial.jpg')
+        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+    elif data == CALLBACK_BUTTON_05:
+        img_h.get_contrast_img(0.5, 'initial.jpg', 'initial.jpg')
+        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+    elif data == CALLBACK_BUTTON_m01:
+        img_h.get_contrast_img(-0.1, 'initial.jpg', 'initial.jpg')
+        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+    elif data == CALLBACK_BUTTON_m05:
+        img_h.get_contrast_img(-0.5, 'initial.jpg', 'initial.jpg')
+        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+    elif data == CALLBACK_BUTTON_FIN:
+        img_h.get_contrast_img(1.0, 'initial.jpg', 'res.jpg')
+        bot.send_photo(chat_id=chat_id, photo=open("res.jpg", mode='rb'))
+
 @handle_image
 @handle_command
 def handle_img_blk_wht(update: Update, context: CallbackContext):
@@ -167,23 +214,39 @@ def handle_img_blk_wht(update: Update, context: CallbackContext):
 
 
 @handle_command
+def handle_contrast(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        text="Contrast:",
+        reply_markup=get_inline_contrast_keyboard(),
+    )
+
+
+@handle_command
 def corona_stat(update: Update, context: CallbackContext):
+    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     geolocator = Nominatim(user_agent="specify_your_app_name_here")
     response = requests.get(
         'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
     soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
+    update.message.reply_text('Top 5 provinces by new infected:')
     last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
-    previous_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()# Get previous csv
+    previous_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()  # Get previous csv
     previous_df = previous_df.sort_values(by=['Province/State'])
     previous_df = previous_df.drop(['Country/Region', 'Last Update', 'Deaths', 'Recovered'], axis=1)
     last_df = last_df.drop(['Country/Region', 'Last Update', 'Deaths', 'Recovered'], axis=1)
     last_df = last_df.sort_values(by=['Province/State'])
     result = last_df.set_index('Province/State').subtract(previous_df.set_index('Province/State'))
     result = result.loc[(result['Confirmed'] > 0)]
+
+    place = 1
     for province in result.sort_values(by=['Confirmed']).dropna().index[:-6:-1]:
-        update.message.reply_text(f"{province}")
+        update.message.reply_text(f"<b>{place}. {province}</b>" +
+                                  f" with {np.floor(result.at[province, 'Confirmed'])} cases",
+                                  parse_mode=telegram.ParseMode.HTML)
+        place += 1
+
     maps = folium.Map(location=[43.01093752182322, 11.903098859375019], zoom_start=2.4, tiles='Stamen Terrain')
-    update.message.reply_text("Your map are processing.Please, wait")
+    update.message.reply_text("Your map is processing. Please, wait...")
     for i in result.index.dropna():
         try:
 
@@ -194,6 +257,11 @@ def corona_stat(update: Update, context: CallbackContext):
         except:
             maps.save('map.html')
     bot.send_document(chat_id=update.message.chat_id, document=open("map.html", mode='rb'))
+    for province in res_data_frame.index:
+        update.message.reply_text(f"<b>{place}. {main_data_frame['Province/State'][province]}</b> "
+                                  f"with {int(res_data_frame.pop(province))} new cases",
+                                  parse_mode=telegram.ParseMode.HTML)  # Sent out user
+        place += 1
 
 
 def get_data_frame(last_csv_url):
@@ -213,7 +281,11 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('corona_stat', corona_stat))
     updater.dispatcher.add_handler(CommandHandler('fact', fact))
     updater.dispatcher.add_handler(CommandHandler('black_white', handle_img_blk_wht))
+    updater.dispatcher.add_handler(CommandHandler('contrast', handle_contrast))
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, get_image))
+
+    # inline handler
+    updater.dispatcher.add_handler(CallbackQueryHandler(callback=handle_keyboard_callback))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))

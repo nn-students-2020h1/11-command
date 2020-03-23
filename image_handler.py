@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
 
 
 def get_black_white_img():
@@ -11,3 +11,9 @@ def get_black_white_img():
             sr = (r+g+b)//3  # Get average value of RGB
             draw.point((x, y), (sr, sr, sr))  # Point this pixel
     image.save('res.jpg', "JPEG")  # Save out image
+
+def get_contrast_img(factor, base_img, res_img):
+    im = Image.open(base_img)
+    enhancer = ImageEnhance.Contrast(im)
+    enhanced_im = enhancer.enhance(1.0 + factor)
+    enhanced_im.save(res_img)
