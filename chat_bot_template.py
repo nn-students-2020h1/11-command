@@ -229,8 +229,8 @@ def corona_stat(update: Update, context: CallbackContext):
         'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
     soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
     update.message.reply_text('Top 5 provinces by new infected:')
-    last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-5]).dropna()  # Get last csv
-    prev_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-6]).dropna()  # Get previous csv
+    last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
+    prev_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()  # Get previous csv
     last_df = last_df.sort_values(by=['Province/State']).reset_index(drop=True)  # Reset all indexes
     prev_df = prev_df.append(last_df[~last_df['Province/State'].isin(prev_df['Province/State'])])
     prev_df = prev_df.sort_values(by=['Province/State']).reset_index(drop=True)
