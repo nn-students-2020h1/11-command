@@ -8,6 +8,7 @@ import requests
 import telegram
 import time
 import pandas as pd
+import numpy as np
 import csv
 import folium
 from geopy.geocoders import Nominatim
@@ -257,11 +258,6 @@ def corona_stat(update: Update, context: CallbackContext):
         except:
             maps.save('map.html')
     bot.send_document(chat_id=update.message.chat_id, document=open("map.html", mode='rb'))
-    for province in res_data_frame.index:
-        update.message.reply_text(f"<b>{place}. {main_data_frame['Province/State'][province]}</b> "
-                                  f"with {int(res_data_frame.pop(province))} new cases",
-                                  parse_mode=telegram.ParseMode.HTML)  # Sent out user
-        place += 1
 
 
 def get_data_frame(last_csv_url):
