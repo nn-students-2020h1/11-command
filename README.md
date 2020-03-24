@@ -23,7 +23,8 @@ This is a repository for Telegram bot that will be developed by 11th team during
 * `/help`- receive some instructions about the bot;
 * `/history` - get your 5 last actions;
 * `/fact` - get the most upvoted fact about cats;
-* `/balck_white` - get the example of image processing (needs image to be uploaded firstly);
+* `/balck_white` - get a black & white version of the image (needs an image to be uploaded firstly);
+* `/contrast` - change the contrast level of the image (needs an image to be uploaded firstly)
 * `/corona_stat` - get the last coronavirus statistics
 
 ## Support
