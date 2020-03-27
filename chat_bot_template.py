@@ -177,8 +177,8 @@ def get_inline_contrast_keyboard():
             InlineKeyboardButton("+0.5", callback_data=CALLBACK_BUTTON_05)
         ],
         [
-            InlineKeyboardButton("-0.1", callback_data=CALLBACK_BUTTON_01),
-            InlineKeyboardButton("-0.5", callback_data=CALLBACK_BUTTON_01)
+            InlineKeyboardButton("-0.1", callback_data=CALLBACK_BUTTON_m01),
+            InlineKeyboardButton("-0.5", callback_data=CALLBACK_BUTTON_m05)
         ],
         [
             InlineKeyboardButton("PERFECT!", callback_data=CALLBACK_BUTTON_FIN)
@@ -194,20 +194,31 @@ def handle_keyboard_callback(update: Update, context: CallbackContext):
 
     if data == CALLBACK_BUTTON_01:
         img_h.get_contrast_img(0.1, 'initial.jpg', 'initial.jpg')
-        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+                                      reply_markup=get_inline_contrast_keyboard())
+        bot.delete_message(chat_id, temp_message.message_id - 1)
+
     elif data == CALLBACK_BUTTON_05:
         img_h.get_contrast_img(0.5, 'initial.jpg', 'initial.jpg')
-        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+                                      reply_markup=get_inline_contrast_keyboard())
+        bot.delete_message(chat_id, temp_message.message_id - 1)
     elif data == CALLBACK_BUTTON_m01:
         img_h.get_contrast_img(-0.1, 'initial.jpg', 'initial.jpg')
-        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+                                      reply_markup=get_inline_contrast_keyboard())
+        bot.delete_message(chat_id, temp_message.message_id - 1)
     elif data == CALLBACK_BUTTON_m05:
         img_h.get_contrast_img(-0.5, 'initial.jpg', 'initial.jpg')
-        bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'), reply_markup=get_inline_contrast_keyboard())
+        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+                                      reply_markup=get_inline_contrast_keyboard())
+        bot.delete_message(chat_id, temp_message.message_id - 1)
     elif data == CALLBACK_BUTTON_FIN:
         img_h.get_contrast_img(1.0, 'initial.jpg', 'res.jpg')
-        bot.send_photo(chat_id=chat_id, photo=open("res.jpg", mode='rb'))
+        final_message = bot.send_photo(chat_id=chat_id, photo=open("res.jpg", mode='rb'))
+        bot.delete_message(chat_id, final_message.message_id - 1)
 
+        
 @handle_image
 @handle_command
 def handle_img_blk_wht(update: Update, context: CallbackContext):
@@ -231,18 +242,18 @@ def corona_stat(update: Update, context: CallbackContext):
     update.message.reply_text('Top 5 provinces by new infected:')
     last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
     prev_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()  # Get previous csv
-    last_df = last_df.sort_values(by=['Province/State']).reset_index(drop=True)  # Reset all indexes
-    prev_df = prev_df.append(last_df[~last_df['Province/State'].isin(prev_df['Province/State'])])
-    prev_df = prev_df.sort_values(by=['Province/State']).reset_index(drop=True)
+    last_df = last_df.sort_values(by=['Province_State']).reset_index(drop=True)  # Reset all indexes
+    prev_df = prev_df.append(last_df[~last_df['Province_State'].isin(prev_df['Province_State'])])
+    prev_df = prev_df.sort_values(by=['Province_State']).reset_index(drop=True)
     last_df['Confirmed'] = last_df['Confirmed'] - prev_df['Confirmed']  # Get count confirmed
     last_df.loc[last_df['Confirmed'] < 0] *= -1  # If new entry, it'll be less than zero, 'cause we need to change it
     last_df = last_df[last_df['Confirmed'] > 0]
     last_df = last_df.sort_values(by=['Confirmed'], ascending=False)
     place = 1
     for i in last_df.index[:5]:
-        if last_df['Province/State'][i] != '':
+        if last_df['Province_State'][i] != '':
             update.message.reply_text(f"<b>{place}</b>"
-                                      f" {last_df['Province/State'][i]} - {last_df['Confirmed'][i]}",
+                                      f" {last_df['Province_State'][i]} - {last_df['Confirmed'][i]}",
                                       parse_mode=telegram.ParseMode.HTML)
         place += 1
 
@@ -257,8 +268,8 @@ def corona_stat(update: Update, context: CallbackContext):
                 color = 'orange'
             else:
                 color = 'green'
-            folium.Marker(location=[last_df['Latitude'][i], last_df['Longitude'][i]],
-                          popup=f"{last_df['Province/State'][i]}:{last_df['Confirmed'][i]}",
+            folium.Marker(location=[last_df['Lat'][i], last_df['Long_'][i]],
+                          popup=f"{last_df['Province_State'][i]}:{last_df['Confirmed'][i]}",
                           icon=folium.Icon(color=color, icon='info-sign')).add_to(maps)
         except:
             maps.save('map.html')
