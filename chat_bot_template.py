@@ -185,6 +185,7 @@ def corona_stat(update: Update, context: CallbackContext):
         'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
     soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
     update.message.reply_text('Top 5 provinces by new infected:')
+    bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
     prev_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()  # Get previous csv
     last_df = last_df.sort_values(by=['Province_State']).reset_index(drop=True)  # Reset all indexes
@@ -195,10 +196,10 @@ def corona_stat(update: Update, context: CallbackContext):
     last_df = last_df[last_df['Confirmed'] > 0]
     last_df = last_df.sort_values(by=['Confirmed'], ascending=False)
     place = 1
-    for i in last_df.index[:5]:
+        for i in last_df.index[:5]:
         if last_df['Province_State'][i] != '':
             update.message.reply_text(f"<b>{place}</b>"
-                                      f" {last_df['Province_State'][i]} - {last_df['Confirmed'][i]}",
+                                      f" {last_df['Combined_Key'][i]} - {last_df['Confirmed'][i]}",
                                       parse_mode=telegram.ParseMode.HTML)
         place += 1
 
