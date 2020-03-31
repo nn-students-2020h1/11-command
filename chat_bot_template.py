@@ -183,7 +183,11 @@ def corona_stat(update: Update, context: CallbackContext):
     bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     response = requests.get(
         'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
-    soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
+    if response.status_code == 200:  # if the website is up, let's backup data
+        with open('corona_stat.html', "wb+") as handle:
+            handle.write(response.content)
+    with open('corona_stat.html', "r") as handle:
+        soup = BeautifulSoup(handle.read(), 'lxml')  # Use library bs4
     update.message.reply_text('Top 5 provinces by new infected:')
     bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
