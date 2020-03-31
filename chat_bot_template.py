@@ -206,6 +206,8 @@ def corona_stat(update: Update, context: CallbackContext):
                                       f" {last_df['Combined_Key'][i]} - {last_df['Confirmed'][i]}",
                                       parse_mode=telegram.ParseMode.HTML)
         place += 1
+    bot.send_message(chat_id=update.effective_message.chat_id, text=output,
+                     reply_markup=InlineKeyboard.get_inline_coronavirus_keyboard(), parse_mode=telegram.ParseMode.HTML)
 
     maps = folium.Map(location=[43.01093752182322, 11.903098859375019], zoom_start=2.4, tiles='Stamen Terrain')
     """Making map"""
