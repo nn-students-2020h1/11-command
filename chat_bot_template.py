@@ -7,18 +7,20 @@ import os
 import requests
 import telegram
 import time
-import pandas as pd
-import numpy as np
 import csv
 import folium
-from geopy.geocoders import Nominatim
-from bs4 import BeautifulSoup
+
+import pandas as pd
+import numpy as np
 import image_handler as img_h
 
+from geopy.geocoders import Nominatim
+from bs4 import BeautifulSoup
 from setup import PROXY, TOKEN
 from telegram import Bot, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram import ParseMode
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, CallbackQueryHandler
+from inline_handle import InlineCallback, InlineKeyboard
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -33,12 +35,6 @@ bot = Bot(
     token=TOKEN,
     base_url=PROXY,  # delete it if connection via VPN
 )
-
-CALLBACK_BUTTON_01 = "callback_increase_01"
-CALLBACK_BUTTON_05 = "callback_increase_05"
-CALLBACK_BUTTON_m01 = "callback_decrease_01"
-CALLBACK_BUTTON_m05 = "callback_decrease_05"
-CALLBACK_BUTTON_FIN = "callback_finish"
 
 
 # Define a few command handlers. These usually take the two arguments update and
@@ -71,7 +67,8 @@ def start(update: Update, context: CallbackContext):
     except FileNotFoundError:
         open(f"{update.message.chat.id}.json", "w+")  # if file doesn't exist, create it for a new user
     update.message.reply_text(f'Hi, {update.effective_user.first_name}!')
-    update.message.reply_text('Please, type <b>/help</b> to see the list of commands.', parse_mode=telegram.ParseMode.HTML)
+    update.message.reply_text('Please, type <b>/help</b> to see the list of commands.',
+                              parse_mode=telegram.ParseMode.HTML)
 
 
 @handle_command
@@ -169,56 +166,6 @@ def handle_image(func):
     return inner
 
 
-def get_inline_contrast_keyboard():
-    """Get custom inline keyboard for modifying contrast of an image"""
-    keyboard = [
-        [
-            InlineKeyboardButton("+0.1", callback_data=CALLBACK_BUTTON_01),
-            InlineKeyboardButton("+0.5", callback_data=CALLBACK_BUTTON_05)
-        ],
-        [
-            InlineKeyboardButton("-0.1", callback_data=CALLBACK_BUTTON_m01),
-            InlineKeyboardButton("-0.5", callback_data=CALLBACK_BUTTON_m05)
-        ],
-        [
-            InlineKeyboardButton("PERFECT!", callback_data=CALLBACK_BUTTON_FIN)
-        ]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-
-def handle_keyboard_callback(update: Update, context: CallbackContext):
-    query = update.callback_query
-    data = query.data
-    chat_id = update.effective_message.chat_id
-
-    if data == CALLBACK_BUTTON_01:
-        img_h.get_contrast_img(0.1, 'initial.jpg', 'initial.jpg')
-        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
-                                      reply_markup=get_inline_contrast_keyboard())
-        bot.delete_message(chat_id, temp_message.message_id - 1)
-
-    elif data == CALLBACK_BUTTON_05:
-        img_h.get_contrast_img(0.5, 'initial.jpg', 'initial.jpg')
-        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
-                                      reply_markup=get_inline_contrast_keyboard())
-        bot.delete_message(chat_id, temp_message.message_id - 1)
-    elif data == CALLBACK_BUTTON_m01:
-        img_h.get_contrast_img(-0.1, 'initial.jpg', 'initial.jpg')
-        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
-                                      reply_markup=get_inline_contrast_keyboard())
-        bot.delete_message(chat_id, temp_message.message_id - 1)
-    elif data == CALLBACK_BUTTON_m05:
-        img_h.get_contrast_img(-0.5, 'initial.jpg', 'initial.jpg')
-        temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
-                                      reply_markup=get_inline_contrast_keyboard())
-        bot.delete_message(chat_id, temp_message.message_id - 1)
-    elif data == CALLBACK_BUTTON_FIN:
-        img_h.get_contrast_img(1.0, 'initial.jpg', 'res.jpg')
-        final_message = bot.send_photo(chat_id=chat_id, photo=open("res.jpg", mode='rb'))
-        bot.delete_message(chat_id, final_message.message_id - 1)
-
-        
 @handle_image
 @handle_command
 def handle_img_blk_wht(update: Update, context: CallbackContext):
@@ -227,10 +174,8 @@ def handle_img_blk_wht(update: Update, context: CallbackContext):
 
 @handle_command
 def handle_contrast(update: Update, context: CallbackContext):
-    update.message.reply_text(
-        text="Contrast:",
-        reply_markup=get_inline_contrast_keyboard(),
-    )
+    bot.send_photo(chat_id=update.effective_message.chat_id, photo=open('initial.jpg', mode='rb'), caption='Contrast',
+                   reply_markup=InlineKeyboard.get_inline_contrast_keyboard())
 
 
 @handle_command
@@ -298,7 +243,7 @@ def main():
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, get_image))
 
     # inline handler
-    updater.dispatcher.add_handler(CallbackQueryHandler(callback=handle_keyboard_callback))
+    updater.dispatcher.add_handler(CallbackQueryHandler(callback=InlineCallback.handle_keyboard_callback))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
