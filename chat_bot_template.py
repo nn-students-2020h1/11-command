@@ -175,7 +175,7 @@ def handle_img_blk_wht(update: Update, context: CallbackContext):
 @handle_command
 def handle_contrast(update: Update, context: CallbackContext):
     bot.send_photo(chat_id=update.effective_message.chat_id, photo=open('initial.jpg', mode='rb'), caption='Contrast',
-                   reply_markup=InlineKeyboard.get_inline_contrast_keyboard())
+                   reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
 
 
 @handle_command
@@ -200,14 +200,13 @@ def corona_stat(update: Update, context: CallbackContext):
     last_df = last_df[last_df['Confirmed'] > 0]
     last_df = last_df.sort_values(by=['Confirmed'], ascending=False)
     place = 1
-        for i in last_df.index[:5]:
+    output = ''
+    for i in last_df.index[:5]:
         if last_df['Province_State'][i] != '':
-            update.message.reply_text(f"<b>{place}</b>"
-                                      f" {last_df['Combined_Key'][i]} - {last_df['Confirmed'][i]}",
-                                      parse_mode=telegram.ParseMode.HTML)
+            output += f"<b>{place}</b> {last_df['Combined_Key'][i]} - {last_df['Confirmed'][i]}\n"
         place += 1
     bot.send_message(chat_id=update.effective_message.chat_id, text=output,
-                     reply_markup=InlineKeyboard.get_inline_coronavirus_keyboard(), parse_mode=telegram.ParseMode.HTML)
+                     reply_markup=InlineKeyboardFactory.get_inline_coronavirus_keyboard(), parse_mode=telegram.ParseMode.HTML)
 
     maps = folium.Map(location=[43.01093752182322, 11.903098859375019], zoom_start=2.4, tiles='Stamen Terrain')
     """Making map"""
