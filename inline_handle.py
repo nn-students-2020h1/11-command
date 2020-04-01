@@ -4,7 +4,7 @@ import csv
 import telegram
 
 from bs4 import BeautifulSoup
-from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 from telegram.ext import CallbackContext
 from selenium import webdriver
 from setup import PROXY, TOKEN
@@ -25,7 +25,7 @@ bot = Bot(
 )
 
 
-class InlineKeyboardFactory():  # provides all inline keyboards
+class InlineKeyboardFactory:  # provides all inline keyboards
     @staticmethod
     def get_inline_contrast_keyboard():  # keyboard for image contrast level
         """Get custom inline keyboard for modifying contrast of an image"""
@@ -55,7 +55,7 @@ class InlineKeyboardFactory():  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
 
-class InlineCallback():  # Processes the events on inline keyboards' buttons
+class InlineCallback:  # Processes the events on inline keyboards' buttons
     @staticmethod
     def handle_keyboard_callback(update: Update, context: CallbackContext):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
@@ -63,36 +63,61 @@ class InlineCallback():  # Processes the events on inline keyboards' buttons
         chat_id = update.effective_message.chat_id  # chat id for sending messages
 
         if data == CALLBACK_BUTTON_01:
-            img_h.get_contrast_img(0.1, 'initial.jpg', 'initial.jpg')  # replace the existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+            img_h.get_contrast_img(0.1, 'initial_user_images/initial.jpg',
+                                   'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
+            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
                                           reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
 
         elif data == CALLBACK_BUTTON_05:
-            img_h.get_contrast_img(0.5, 'initial.jpg', 'initial.jpg')  # replace the existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+            img_h.get_contrast_img(0.5, 'initial_user_images/initial.jpg', 'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
+            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
                                           reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
         elif data == CALLBACK_BUTTON_m01:
-            img_h.get_contrast_img(-0.1, 'initial.jpg', 'initial.jpg')  # replace existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+            img_h.get_contrast_img(-0.1, 'initial_user_images/initial.jpg',
+                                   'initial_user_images/initial.jpg')  # replace existing image with an enhanced one
+
+            temp_message = bot.send_photo(chat_id=chat_id,
+                                          photo=open('initial_user_images/initial.jpg', mode='rb'),
                                           reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
+
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+
         elif data == CALLBACK_BUTTON_m05:
-            img_h.get_contrast_img(-0.5, 'initial.jpg', 'initial.jpg')  # replace existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial.jpg', mode='rb'),
+            img_h.get_contrast_img(-0.5, 'initial_user_images/initial.jpg',
+                                   'initial_user_images/initial.jpg')  # replace existing image with an enhanced one
+
+            temp_message = bot.send_photo(chat_id=chat_id,
+                                          photo=open('initial_user_images/initial.jpg', mode='rb'),
                                           reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+
         elif data == CALLBACK_BUTTON_FIN:
-            img_h.get_contrast_img(1.0, 'initial.jpg', 'res.jpg')  # get final result after editing
-            final_message = bot.send_photo(chat_id=chat_id, photo=open("res.jpg", mode='rb'))
+            img_h.get_contrast_img(1.0, 'initial_user_images/initial.jpg',
+                                   'result_user_images/res.jpg')  # get final result after editing
+            final_message = bot.send_photo(chat_id=chat_id,
+                                           photo=open("result_user_images/res.jpg", mode='rb'))
             bot.delete_message(chat_id, final_message.message_id - 1)  # deletes previous message with an old image
 
+            reply_markup = ReplyKeyboardRemove()  # Remove keyboard
+            bot.send_message(chat_id=chat_id,
+                             text='Upload new image',
+                             reply_markup=reply_markup)
+
         elif data == CALLBACK_BUTTON_COVID19_RU:
-            driver = webdriver.Chrome(ChromeDriverManager().install())  # installs the web driver to run JS-tables on the website
-            driver.get('https://virus-zone.ru/coronavirus-v-rossii/')  # runs the page with covid-19 data for Russia
-            table = driver.find_element_by_xpath('//div[3]/div[4]/div/table')  # find the JS-generated table with statistics on covid-19 divided by regions
-            table_html = table.get_attribute('innerHTML')  # get the html-version of JS-generated table for parsing it
+            driver = webdriver.Chrome(ChromeDriverManager().install())
+            # installs the web driver to run JS-tables on the website
+
+            driver.get('https://virus-zone.ru/coronavirus-v-rossii/')
+            # runs the page with covid-19 data for Russia
+
+            table = driver.find_element_by_xpath('//div[3]/div[4]/div/table')
+            # find the JS-generated table with statistics on covid-19 divided by regions
+
+            table_html = table.get_attribute('innerHTML')
+            # get the html-version of JS-generated table for parsing it
+
             table_html = BeautifulSoup(table_html, 'html.parser')  # format it with BeautifulSoup
 
             headings = []  # USELESS IN CODE, NEEDED JUST FOR BETTER UNDERSTANDING: headings of a table
@@ -124,5 +149,7 @@ class InlineCallback():  # Processes the events on inline keyboards' buttons
                     place += 1
                     if any(row):  # if the line is not empty
                         content = row.split(',')  # split the row by ',' symbol
-                        bot.send_message(chat_id=chat_id, text=f'<b>{place}.</b> {content[0]}: {content[1]} cases\n',
-                                         parse_mode=telegram.ParseMode.HTML)  # content[0] - city name, content[1] - number of cases
+                        bot.send_message(chat_id=chat_id, text=f'<b>{place}.</b> '
+                                         f'{content[0]}: {content[1]} cases\n',
+                                         parse_mode=telegram.ParseMode.HTML)  # content[0] - city name,
+                                                                              # content[1] - number of cases
