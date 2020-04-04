@@ -1,0 +1,26 @@
+[
+  {
+    "user_name": "Dmity",
+    "function": "command_get_image",
+    "text": null,
+    "time": "17:19:32"
+  },
+  {
+    "user_name": "Dmity",
+    "function": "command_handle_contrast",
+    "text": "/contrast",
+    "time": "17:19:39"
+  },
+  {
+    "user_name": "Dmity",
+    "function": "command_get_image",
+    "text": null,
+    "time": "17:19:59"
+  },
+  {
+    "user_name": "Dmity",
+    "function": "command_get_white_black_img",
+    "text": "/black_white",
+    "time": "17:20:06"
+  }
+]
