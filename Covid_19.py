@@ -6,23 +6,25 @@ from random import shuffle
 
 class Covid19:
     def __init__(self):
-        self._news_information = Covid19.get_news()
-        self._title_list = list(self._news_information.keys())
+        self._news_information = Covid19.get_news()  # Fill dictionary fresh information
+        self._title_list = list(self._news_information.keys())  # Create list of news titles
         self._current_news = 0
 
     def set_current_news(self, value):
         self._current_news = value
 
-    def shuffle_news(self):
+    def shuffle_news(self):  # Shuffle all the news in list
         shuffle(self._title_list)
 
-    def get_title_news(self, number):
+    def get_title_news(self, number):  # Get title of specific news
         return self._title_list[number]
 
-    def get_brief_description(self, number):
+    def get_brief_description(self, number):  # Get brief description certain news
+        """Title of news is dictionary key, thus search for specific news will be in constant time O(1)
+        because collision won't be, one news corresponds to specif link """
         return self._news_information[self.get_title_news(number)][1]
 
-    def get_href_news(self):
+    def get_href_news(self):  # Get link of specific news
         return self._news_information[self.get_title_news(self._current_news)][0]
 
     @staticmethod
