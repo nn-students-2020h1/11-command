@@ -1,15 +1,19 @@
 import json
 import requests
+import csv
 
-from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
-from inline_handle import InlineKeyboardFactory
-
-
+from inline_handle import InlineCallback, InlineKeyboardFactory
 from setup import TOKEN, PROXY
 from auxiliary_functions import handle_command, load_history, get_data_frame, get_corona_map, handle_image
 from image_handler import ImageHandler
+from countryinfo import CountryInfo
+from googletrans import Translator
+from geopy.geocoders import Nominatim
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 bot = Bot(
@@ -41,6 +45,7 @@ def command_chat_help(update: Update, context: CallbackContext):
                               "<b>/black_white</b> to transform your image into black & white\n" +
                               "<b>/corona_stat</b> to see 5 top provinces by new coronavirus cases",
                               "<b>/news</b> to see fresh news about COVID-19",
+                              "<b>/infected</b> to get the probability of you getting COVID-19",
 
                               parse_mode=ParseMode.HTML)
 
@@ -157,3 +162,98 @@ def command_handle_contrast(update: Update, context: CallbackContext):
                    photo=open('initial_user_images/initial.jpg', mode='rb'), caption='Contrast',
                    reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
 
+    
+@handle_command
+def command_get_probability(update: Update, context: CallbackContext):
+    """Returns the probability of being infected based on user answers"""
+    location_button = KeyboardButton('Send my location', request_location=True)
+    keyboard = ReplyKeyboardMarkup([[location_button]])
+    bot.send_message(chat_id=update.message.chat_id, text="Firstly, let's figure out where are you from...",
+                     reply_markup=keyboard)
+
+
+def get_location(update: Update, context: CallbackContext):
+    """Get user's location"""
+    location = f"{update.message.location.latitude}, {update.message.location.longitude}"
+    with open(f"personal_{update.message.chat.id}.json", 'w+') as handle:
+        json.dump({"location": location}, handle, ensure_ascii=False, indent=2)
+    bot.send_message(chat_id=update.message.chat_id, text="Got your location!", reply_markup=ReplyKeyboardRemove())
+    bot.send_message(chat_id=update.message.chat_id, text="Next, do you stay at home during quarantine?",
+                     reply_markup=InlineKeyboardFactory.get_inline_stayhome())
+
+
+def calc_probability(chat_id):
+    personal = []
+    with open(f"personal_{chat_id}.json", 'r') as handle:
+        personal = json.load(handle)
+
+    geolocator = Nominatim(user_agent="tg_bot")
+    location = geolocator.reverse(personal["location"], language='ru')
+    country = location.address.split(', ')[-1]
+
+    chance = 1.0
+
+    if personal["at_home"]:
+        chance *= 0.5
+    else:
+        chance *= 10
+
+    if personal["blood"] == 1:
+        chance *= 0.7
+    elif personal["blood"] == 2:
+        chance *= 1.2
+
+    # fix for US due to wrong geopy formatting
+    if country == "Соединённые Штаты Америки":
+        country = "США"
+
+    driver = webdriver.Chrome(ChromeDriverManager().install())
+    # installs the web driver to run JS-tables on the website
+
+    driver.get('https://virus-zone.ru/coronavirus-v-mire/')
+    # runs the page with covid-19 data for World
+
+    table = driver.find_element_by_xpath('/html/body/div[3]/div[6]/div/table')
+    # find the JS-generated table with statistics on covid-19 divided by regions
+
+    table_html = table.get_attribute('innerHTML')
+    # get the html-version of JS-generated table for parsing it
+
+    table_html = BeautifulSoup(table_html, 'html.parser')  # format it with BeautifulSoup
+
+    headings = []  # USELESS IN CODE, NEEDED JUST FOR BETTER UNDERSTANDING: headings of a table
+    for table_row in table_html.findAll('thead'):  # find html-tag for heading of a table
+        columns = table_row.findAll('th')  # find all components of an html-heading by their tag <th> </th>
+        heading = []  # stores single heading
+        for column in columns:  # for each column's heading:
+            heading.append(column.text.strip())  # add heading without whitespaces (raw data provides heading
+            # with a number of useless whitespaces, thus we need to get only letters)
+        headings.append(heading)  # add formatted heading
+
+    output_rows = []  # ALL rows of a table
+    for table_row in table_html.findAll('tr'):  # find html-tag for row of a table
+        columns = table_row.findAll('td')  # find each cell of a row
+        output_row = []  # SINGLE row
+        for column in columns:  # for each cell:
+            output_row.append(column.text.strip())  # add cell to the row without whitespaces
+        output_rows.append(output_row)  # add formatted row and go to the next one
+
+    with open('covid_ru.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
+        writer = csv.writer(csvfile)  # csv writer for this file
+        writer.writerows(headings)  # firstly, add headings
+        writer.writerows(output_rows)  # then add all rows from table
+
+    with open('covid_ru.csv', 'r') as handle:  # open .csv file to get our covid-19 RU data
+        reader = handle.readlines()[2::]  # ignore heading and 1 empty line
+        for row in reader:
+            if any(row):  # if the line is not empty
+                data_country = row.split(',')[0]  # split the row by ',' symbol, select first (Country)
+                if data_country == country:
+                    translator = Translator() # to get country name in English
+                    infected = row.split(',')[1].split(' ')[0] # without last split data would be like 6453 (+678),
+                    # so we don't need (+678)
+                    population = CountryInfo(f"{translator.translate(country, dest='en', src='ru').text}").population()
+                    # translate country name into English, then get its population using CountryInfo library
+                    chance *= (int(infected) * 10) / int(population)
+
+    return format(chance, '.8f')
