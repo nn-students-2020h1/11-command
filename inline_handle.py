@@ -149,6 +149,15 @@ class InlineKeyboardFactory:  # provides all inline keyboards
 
 
 class InlineCallback:  # Processes the events on inline keyboards' buttons
+    
+    @staticmethod
+    def update_data(add_data: {}, file: json):
+        with open(file, "r") as handle:
+            data = json.load(handle)
+        data.update(add_data)
+        with open(file, "w") as handle:
+            json.dump(data, handle, ensure_ascii=False, indent=2)
+    
     @staticmethod
     def handle_keyboard_callback(update: Update, context: CallbackContext):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
