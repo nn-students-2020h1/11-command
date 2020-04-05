@@ -207,7 +207,10 @@ def calc_probability(chat_id):
     if country == "Соединённые Штаты Америки":
         country = "США"
 
-    driver = webdriver.Chrome(ChromeDriverManager().install())
+    try:
+        driver = webdriver.Chrome(ChromeDriverManager().install())
+    except ValueError:
+        driver = "ВСТАВЬТЕ_ПУТЬ_К_chromedriver.exe, например C:/Python36/chromedriver.exe"
     # installs the web driver to run JS-tables on the website
 
     driver.get('https://virus-zone.ru/coronavirus-v-mire/')
