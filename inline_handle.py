@@ -306,7 +306,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                                     text="I will be waiting for you here")
             bot.delete_message(chat_id, temp.message_id - 1)
             
-                elif data == CALLBACK_BUTTON_STAYHOME:
+        elif data == CALLBACK_BUTTON_STAYHOME:
             with open(f"personal_{chat_id}.json", "r") as handle:
                 data = json.load(handle)
             data.update({"at_home": True})
