@@ -1,5 +1,4 @@
 import image_handler as img_h
-import requests
 import csv
 import telegram
 
@@ -9,6 +8,7 @@ from telegram.ext import CallbackContext
 from selenium import webdriver
 from setup import PROXY, TOKEN
 from webdriver_manager.chrome import ChromeDriverManager
+from Covid_19 import Covid19
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -19,16 +19,26 @@ CALLBACK_BUTTON_FIN = "callback_finish"
 
 CALLBACK_BUTTON_COVID19_RU = "callback_covid19_ru"
 
-bot = Bot(
+CALLBACK_BUTTON_NEWS_01 = "first_news"
+CALLBACK_BUTTON_NEWS_02 = "second_news"
+CALLBACK_BUTTON_NEWS_03 = "third news"
+CALLBACK_BUTTON_NEWS_04 = "other_news"
+CALLBACK_BUTTON_NEWS_06 = "read more in source"
+CALLBACK_BUTTON_NEWS_07 = "refuse to read more"
+
+bot: Bot = Bot(
     token=TOKEN,
     base_url=PROXY,  # delete it if connection via VPN
 )
+
+Covid = Covid19()
 
 
 class InlineKeyboardFactory:  # provides all inline keyboards
     @staticmethod
     def get_inline_contrast_keyboard():  # keyboard for image contrast level
         """Get custom inline keyboard for modifying contrast of an image"""
+
         keyboard = [
             [
                 InlineKeyboardButton("+0.1", callback_data=CALLBACK_BUTTON_01),  # increases contrast by 0.1
@@ -54,6 +64,47 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         ]
         return InlineKeyboardMarkup(keyboard)
 
+    @staticmethod
+    def get_inline_news_keyboard():  # Get three news buttons
+        Covid.shuffle_news()
+        keyboard = [
+            [
+                InlineKeyboardButton(Covid.get_title_news(0),
+                                     callback_data=CALLBACK_BUTTON_NEWS_01)
+            ],
+            [
+                InlineKeyboardButton(Covid.get_title_news(1),
+                                     callback_data=CALLBACK_BUTTON_NEWS_02)
+            ],
+            [
+                InlineKeyboardButton(Covid.get_title_news(2),
+                                     callback_data=CALLBACK_BUTTON_NEWS_03)
+            ],
+            [
+                InlineKeyboardButton("Other",
+                                     callback_data=CALLBACK_BUTTON_NEWS_04),
+                InlineKeyboardButton("Close",
+                                     callback_data=CALLBACK_BUTTON_NEWS_07)
+            ]
+        ]
+
+        return InlineKeyboardMarkup(keyboard)
+
+    @staticmethod
+    def get_inline_keyboard_more_information():
+        keyboard = [
+            [
+                InlineKeyboardButton("Read more in source",
+                                     callback_data=CALLBACK_BUTTON_NEWS_06),  # Get Russian stats
+                InlineKeyboardButton("Other",
+                                     callback_data=CALLBACK_BUTTON_NEWS_04)
+            ],
+            [
+                InlineKeyboardButton("Close", callback_data=CALLBACK_BUTTON_NEWS_07)  # Get Russian stats
+            ]
+        ]
+        return InlineKeyboardMarkup(keyboard)
+
 
 class InlineCallback:  # Processes the events on inline keyboards' buttons
     @staticmethod
@@ -74,6 +125,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
                                           reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+
         elif data == CALLBACK_BUTTON_m01:
             img_h.get_contrast_img(-0.1, 'initial_user_images/initial.jpg',
                                    'initial_user_images/initial.jpg')  # replace existing image with an enhanced one
@@ -153,3 +205,62 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                                          f'{content[0]}: {content[1]} cases\n',
                                          parse_mode=telegram.ParseMode.HTML)  # content[0] - city name,
                                                                               # content[1] - number of cases
+
+        elif data == CALLBACK_BUTTON_NEWS_01:
+
+            sa = bot.send_message(chat_id=chat_id,
+                                  text=f"<b><u>{Covid.get_title_news(0)}</u></b> "
+                                  f"\n\n{Covid.get_brief_description(0)}",
+                                  parse_mode='HTML')
+
+            Covid.set_current_news(0)
+            bot.delete_message(chat_id, sa.message_id - 1)
+            bot.send_message(chat_id=chat_id,
+                             text="Do you want to read more?",
+                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
+
+        elif data == CALLBACK_BUTTON_NEWS_02:  # Choose second news
+
+            sa = bot.send_message(chat_id=chat_id,
+                                  text=f"<b>{Covid.get_title_news(1)}</b> "
+                                  f"\n\n{Covid.get_brief_description(1)}",
+                                  parse_mode='HTML')
+
+            Covid.set_current_news(1)
+            bot.delete_message(chat_id, sa.message_id - 1)
+            bot.send_message(chat_id=chat_id,
+                             text="Do you want to read more?",
+                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
+        elif data == CALLBACK_BUTTON_NEWS_03:  # Choose second news
+
+            sa = bot.send_message(chat_id=chat_id,
+                                  text=f"<b>{Covid.get_title_news(2)}</b> "
+                                  f" \n\n {Covid.get_brief_description(2)}",
+                                  parse_mode='HTML')
+
+            Covid.set_current_news(2)
+            bot.delete_message(chat_id, sa.message_id - 1)
+            bot.send_message(chat_id=chat_id,
+                             text="Do you want to read more?",
+                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
+
+        elif data == CALLBACK_BUTTON_NEWS_04:  # Choose other news
+
+            InlineKeyboardFactory.get_inline_news_keyboard()
+            temp = bot.send_message(chat_id=update.effective_message.chat_id,
+                                    text='Choose news',
+                                    reply_markup=InlineKeyboardFactory.get_inline_news_keyboard())
+            bot.delete_message(chat_id, temp.message_id - 1)
+
+        elif data == CALLBACK_BUTTON_NEWS_06:  # Choose read more about certain news
+
+            temp = bot.send_message(chat_id=chat_id,
+                                    text=Covid.get_href_news())
+            
+            bot.delete_message(chat_id, temp.message_id - 1)
+
+        elif data == CALLBACK_BUTTON_NEWS_07:
+            temp = bot.send_message(chat_id=chat_id,
+                                    text="I will be waiting for you here")
+            bot.delete_message(chat_id, temp.message_id - 1)
+

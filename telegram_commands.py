@@ -4,12 +4,12 @@ import requests
 from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
-from inline_handle import InlineCallback, InlineKeyboardFactory
+from inline_handle import InlineKeyboardFactory
 
 
 from setup import TOKEN, PROXY
 from auxiliary_functions import handle_command, load_history, get_data_frame, get_corona_map, handle_image
-import image_handler as img_h
+from image_handler import ImageHandler
 
 
 bot = Bot(
@@ -40,6 +40,8 @@ def command_chat_help(update: Update, context: CallbackContext):
                               "<b>/fact</b> to get the top fact from cat-fact\n" +
                               "<b>/black_white</b> to transform your image into black & white\n" +
                               "<b>/corona_stat</b> to see 5 top provinces by new coronavirus cases",
+                              "<b>/news</b> to see fresh news about COVID-19",
+
                               parse_mode=ParseMode.HTML)
 
 
@@ -112,6 +114,13 @@ def command_corona_stat(update: Update, context: CallbackContext):
 
 
 @handle_command
+def command_get_news(update: Update, context: CallbackContext):  # You can get fresh news from Yandex
+    bot.send_message(chat_id=update.effective_message.chat_id,
+                     text='Choose news',
+                     reply_markup=InlineKeyboardFactory.get_inline_news_keyboard())
+
+
+@handle_command
 def command_get_image(update: Update, context: CallbackContext):
     """This method getting an image and give choice to user
             what to do with image"""
@@ -132,11 +141,12 @@ def command_get_image(update: Update, context: CallbackContext):
 @handle_command
 def command_get_white_black_img(update: Update, context: CallbackContext):
     """This function is processing image by the black_white filter"""
-    img_h.get_black_white_img()
+    img = ImageHandler()
+    img.get_black_white_img()
 
     reply_markup = ReplyKeyboardRemove()  # Remove keyboard
     bot.send_message(chat_id=update.message.chat_id,
-                     text='Upload new image',
+                     text="Upload new image",
                      reply_markup=reply_markup)
 
 
