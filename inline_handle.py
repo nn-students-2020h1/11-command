@@ -11,7 +11,7 @@ from telegram.ext import CallbackContext
 from selenium import webdriver
 from setup import PROXY, TOKEN
 from webdriver_manager.chrome import ChromeDriverManager
-from Covid_19 import Covid19
+from Covid_19 import CovidNews
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -41,7 +41,7 @@ bot: Bot = Bot(
     base_url=PROXY,  # delete it if connection via VPN
 )
 
-Covid = Covid19()
+Covid = CovidNews()
 
 
 class InlineKeyboardFactory:  # provides all inline keyboards
@@ -149,6 +149,15 @@ class InlineKeyboardFactory:  # provides all inline keyboards
 
 
 class InlineCallback:  # Processes the events on inline keyboards' buttons
+    
+    @staticmethod
+    def update_data(add_data: {}, file: json):
+        with open(file, "r") as handle:
+            data = json.load(handle)
+        data.update(add_data)
+        with open(file, "w") as handle:
+            json.dump(data, handle, ensure_ascii=False, indent=2)
+    
     @staticmethod
     def handle_keyboard_callback(update: Update, context: CallbackContext):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
@@ -200,7 +209,10 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                              reply_markup=reply_markup)
 
         elif data == CALLBACK_BUTTON_COVID19_RU:
-            driver = webdriver.Chrome(ChromeDriverManager().install())
+            try:
+                driver = webdriver.Chrome(ChromeDriverManager().install())
+            except ValueError:
+                driver = "ВСТАВЬТЕ_ПУТЬ_К_chromedriver.exe, например C:/Python36/chromedriver.exe"
             # installs the web driver to run JS-tables on the website
 
             driver.get('https://virus-zone.ru/coronavirus-v-rossii/')
@@ -250,41 +262,15 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
 
         elif data == CALLBACK_BUTTON_NEWS_01:
 
-            sa = bot.send_message(chat_id=chat_id,
-                                  text=f"<b><u>{Covid.get_title_news(0)}</u></b> "
-                                  f"\n\n{Covid.get_brief_description(0)}",
-                                  parse_mode='HTML')
-
-            Covid.set_current_news(0)
-            bot.delete_message(chat_id, sa.message_id - 1)
-            bot.send_message(chat_id=chat_id,
-                             text="Do you want to read more?",
-                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
+            Covid.send_message(bot=bot, chat_id=chat_id, value=0)
 
         elif data == CALLBACK_BUTTON_NEWS_02:  # Choose second news
 
-            sa = bot.send_message(chat_id=chat_id,
-                                  text=f"<b>{Covid.get_title_news(1)}</b> "
-                                  f"\n\n{Covid.get_brief_description(1)}",
-                                  parse_mode='HTML')
+            Covid.send_message(bot=bot, chat_id=chat_id, value=1)
 
-            Covid.set_current_news(1)
-            bot.delete_message(chat_id, sa.message_id - 1)
-            bot.send_message(chat_id=chat_id,
-                             text="Do you want to read more?",
-                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
         elif data == CALLBACK_BUTTON_NEWS_03:  # Choose second news
 
-            sa = bot.send_message(chat_id=chat_id,
-                                  text=f"<b>{Covid.get_title_news(2)}</b> "
-                                  f" \n\n {Covid.get_brief_description(2)}",
-                                  parse_mode='HTML')
-
-            Covid.set_current_news(2)
-            bot.delete_message(chat_id, sa.message_id - 1)
-            bot.send_message(chat_id=chat_id,
-                             text="Do you want to read more?",
-                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
+            Covid.send_message(bot=bot, chat_id=chat_id, value=2)
 
         elif data == CALLBACK_BUTTON_NEWS_04:  # Choose other news
 
@@ -307,52 +293,32 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             bot.delete_message(chat_id, temp.message_id - 1)
             
         elif data == CALLBACK_BUTTON_STAYHOME:
-            with open(f"personal_{chat_id}.json", "r") as handle:
-                data = json.load(handle)
-            data.update({"at_home": True})
-            with open(f"personal_{chat_id}.json", "w") as handle:
-                json.dump(data, handle, ensure_ascii=False, indent=2)
+            InlineCallback.update_data({"at_home": True}, f"personal_{chat_id}.json")
             bot.send_message(chat_id=chat_id, text="Perfect! Now, select your blood type...",
                              reply_markup=InlineKeyboardFactory.get_inline_bloodtype())
 
         elif data == CALLBACK_BUTTON_NOSTAY:
-            with open(f"personal_{chat_id}.json", "r") as handle:
-                personal = json.load(handle)
-            personal.update({"at_home": False})
-            with open(f"personal_{chat_id}.json", "w") as handle:
-                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            InlineCallback.update_data({"at_home": False}, f"personal_{chat_id}.json")
             bot.send_message(chat_id=chat_id,
                              text="I strongly recommend you to stay home! Now, select your blood type...",
                              reply_markup=InlineKeyboardFactory.get_inline_bloodtype())
-        
+
         elif data == CALLBACK_BUTTON_BLOOD_I:
-            with open(f"personal_{chat_id}.json", "r") as handle:
-                personal = json.load(handle)
-            personal.update({"blood": 1})
-            with open(f"personal_{chat_id}.json", "w") as handle:
-                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            InlineCallback.update_data({"blood": 1}, f"personal_{chat_id}.json")
             bot.send_message(chat_id=chat_id,
                              text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
             bot.send_message(chat_id=chat_id,
                              text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
-        
+
         elif data == CALLBACK_BUTTON_BLOOD_II:
-            with open(f"personal_{chat_id}.json", "r") as handle:
-                personal = json.load(handle)
-            personal.update({"blood": 2})
-            with open(f"personal_{chat_id}.json", "w") as handle:
-                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            InlineCallback.update_data({"blood": 2}, f"personal_{chat_id}.json")
             bot.send_message(chat_id=chat_id,
                              text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
             bot.send_message(chat_id=chat_id,
                              text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
-            
+
         elif data == CALLBACK_BUTTON_BLOOD_III or data == CALLBACK_BUTTON_BLOOD_IV:
-            with open(f"personal_{chat_id}.json", "r") as handle:
-                personal = json.load(handle)
-            personal.update({"blood": 3})
-            with open(f"personal_{chat_id}.json", "w") as handle:
-                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            InlineCallback.update_data({"blood": 3}, f"personal_{chat_id}.json")
             bot.send_message(chat_id=chat_id,
                              text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
             bot.send_message(chat_id=chat_id,
