@@ -41,6 +41,9 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('contrast', tg.command_handle_contrast))
     updater.dispatcher.add_handler(CommandHandler('news', tg.command_get_news))
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, tg.command_get_image))
+    
+    # location handler
+    updater.dispatcher.add_handler(MessageHandler(Filters.location, tg.get_location))
 
     # inline handler
     updater.dispatcher.add_handler(CallbackQueryHandler(callback=InlineCallback.handle_keyboard_callback))
