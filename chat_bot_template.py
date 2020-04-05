@@ -40,6 +40,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('black_white', tg.command_get_white_black_img))
     updater.dispatcher.add_handler(CommandHandler('contrast', tg.command_handle_contrast))
     updater.dispatcher.add_handler(CommandHandler('news', tg.command_get_news))
+    updater.dispatcher.add_handler(CommandHandler('infected', tg.command_get_probability))
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, tg.command_get_image))
     
     # location handler
