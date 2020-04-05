@@ -1,6 +1,9 @@
 import image_handler as img_h
+import requests
 import csv
 import telegram
+import json
+import telegram_commands as tg
 
 from bs4 import BeautifulSoup
 from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
@@ -25,6 +28,13 @@ CALLBACK_BUTTON_NEWS_03 = "third news"
 CALLBACK_BUTTON_NEWS_04 = "other_news"
 CALLBACK_BUTTON_NEWS_06 = "read more in source"
 CALLBACK_BUTTON_NEWS_07 = "refuse to read more"
+
+CALLBACK_BUTTON_STAYHOME = "callback_stay_home"
+CALLBACK_BUTTON_NOSTAY = "callback_no_stay"
+CALLBACK_BUTTON_BLOOD_I = "callback_blood_I"
+CALLBACK_BUTTON_BLOOD_II = "callback_blood_II"
+CALLBACK_BUTTON_BLOOD_III = "callback_blood_III"
+CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
 
 bot: Bot = Bot(
     token=TOKEN,
@@ -101,6 +111,38 @@ class InlineKeyboardFactory:  # provides all inline keyboards
             ],
             [
                 InlineKeyboardButton("Close", callback_data=CALLBACK_BUTTON_NEWS_07)  # Get Russian stats
+            ]
+        ]
+        return InlineKeyboardMarkup(keyboard)
+    
+    @staticmethod
+    def get_inline_stayhome():
+        """Get custom inline keyboard for coronavirus infection probability"""
+        keyboard = [
+            [
+                InlineKeyboardButton("YES", callback_data=CALLBACK_BUTTON_STAYHOME),
+                InlineKeyboardButton("NO", callback_data=CALLBACK_BUTTON_NOSTAY)
+            ]
+        ]
+        return InlineKeyboardMarkup(keyboard)
+    
+    @staticmethod
+    def get_inline_bloodtype():
+        keyboard = [
+            [
+                InlineKeyboardButton("I (0)", callback_data=CALLBACK_BUTTON_BLOOD_I)
+            ],
+            [
+                InlineKeyboardButton("II (A)", callback_data=CALLBACK_BUTTON_BLOOD_II)
+            ],
+            [
+                InlineKeyboardButton("III (B)", callback_data=CALLBACK_BUTTON_BLOOD_III)
+            ],
+            [
+                InlineKeyboardButton("IV (AB)", callback_data=CALLBACK_BUTTON_BLOOD_IV)
+            ],
+            [
+                InlineKeyboardButton("I don't know", callback_data=CALLBACK_BUTTON_BLOOD_I)
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -263,4 +305,55 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             temp = bot.send_message(chat_id=chat_id,
                                     text="I will be waiting for you here")
             bot.delete_message(chat_id, temp.message_id - 1)
+            
+                elif data == CALLBACK_BUTTON_STAYHOME:
+            with open(f"personal_{chat_id}.json", "r") as handle:
+                data = json.load(handle)
+            data.update({"at_home": True})
+            with open(f"personal_{chat_id}.json", "w") as handle:
+                json.dump(data, handle, ensure_ascii=False, indent=2)
+            bot.send_message(chat_id=chat_id, text="Perfect! Now, select your blood type...",
+                             reply_markup=InlineKeyboardFactory.get_inline_bloodtype())
 
+        elif data == CALLBACK_BUTTON_NOSTAY:
+            with open(f"personal_{chat_id}.json", "r") as handle:
+                personal = json.load(handle)
+            personal.update({"at_home": False})
+            with open(f"personal_{chat_id}.json", "w") as handle:
+                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            bot.send_message(chat_id=chat_id,
+                             text="I strongly recommend you to stay home! Now, select your blood type...",
+                             reply_markup=InlineKeyboardFactory.get_inline_bloodtype())
+        
+        elif data == CALLBACK_BUTTON_BLOOD_I:
+            with open(f"personal_{chat_id}.json", "r") as handle:
+                personal = json.load(handle)
+            personal.update({"blood": 1})
+            with open(f"personal_{chat_id}.json", "w") as handle:
+                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            bot.send_message(chat_id=chat_id,
+                             text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
+            bot.send_message(chat_id=chat_id,
+                             text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
+        
+        elif data == CALLBACK_BUTTON_BLOOD_II:
+            with open(f"personal_{chat_id}.json", "r") as handle:
+                personal = json.load(handle)
+            personal.update({"blood": 2})
+            with open(f"personal_{chat_id}.json", "w") as handle:
+                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            bot.send_message(chat_id=chat_id,
+                             text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
+            bot.send_message(chat_id=chat_id,
+                             text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
+            
+        elif data == CALLBACK_BUTTON_BLOOD_III or data == CALLBACK_BUTTON_BLOOD_IV:
+            with open(f"personal_{chat_id}.json", "r") as handle:
+                personal = json.load(handle)
+            personal.update({"blood": 3})
+            with open(f"personal_{chat_id}.json", "w") as handle:
+                json.dump(personal, handle, ensure_ascii=False, indent=2)
+            bot.send_message(chat_id=chat_id,
+                             text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
+            bot.send_message(chat_id=chat_id,
+                             text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
