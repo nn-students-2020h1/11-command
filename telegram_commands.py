@@ -43,11 +43,12 @@ def command_chat_help(update: Update, context: CallbackContext):
                               "<b>/history</b> to get your 5 last actions\n" +
                               "<b>/fact</b> to get the top fact from cat-fact\n" +
                               "<b>/black_white</b> to transform your image into black & white\n" +
-                              "<b>/corona_stat</b> to see 5 top provinces by new coronavirus cases",
-                              "<b>/news</b> to see fresh news about COVID-19",
-                              "<b>/infected</b> to get the probability of you getting COVID-19",
-
-                              parse_mode=ParseMode.HTML)
+                              "<b>/corona_stat</b> to see 5 top provinces by new coronavirus cases\n" +
+                              "<b>/news</b> to see fresh news about COVID-19\n" +
+                              "<b>/infected</b> to get the probability of you getting COVID-19\n" +
+                              "<b>/recommendation</b> to get the recommendation about COVID-19\n",
+                              parse_mode=ParseMode.HTML
+                              )
 
 
 @handle_command
