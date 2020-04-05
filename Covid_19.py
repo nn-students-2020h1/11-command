@@ -2,13 +2,26 @@ import requests
 from bs4 import BeautifulSoup
 
 from random import shuffle
+import inline_handle
 
 
-class Covid19:
+class CovidNews:
     def __init__(self):
-        self._news_information = Covid19.get_news()  # Fill dictionary fresh information
+        self._news_information = CovidNews.get_news()  # Fill dictionary fresh information
         self._title_list = list(self._news_information.keys())  # Create list of news titles
         self._current_news = 0
+
+    def send_message(self, bot, chat_id, value):
+        temp = bot.send_message(chat_id=chat_id,
+                                text=f"<b><u>{self.get_title_news(number=value)}</u></b> "
+                                f"\n\n{self.get_brief_description(number=value)}",
+                                parse_mode='HTML')
+
+        self.set_current_news(value)
+        bot.delete_message(chat_id, temp.message_id - 1)
+        bot.send_message(chat_id=chat_id,
+                         text="Do you want to read more?",
+                         reply_markup=inline_handle.InlineKeyboardFactory.get_inline_keyboard_more_information())
 
     def set_current_news(self, value):
         self._current_news = value
