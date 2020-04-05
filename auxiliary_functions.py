@@ -91,3 +91,5 @@ def handle_image(func):
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=open("result_user_images/res.jpg", mode='rb'))
     return inner
+
+

@@ -11,7 +11,7 @@ from telegram.ext import CallbackContext
 from selenium import webdriver
 from setup import PROXY, TOKEN
 from webdriver_manager.chrome import ChromeDriverManager
-from Covid_19 import Covid19
+from Covid_19 import CovidNews
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -41,7 +41,7 @@ bot: Bot = Bot(
     base_url=PROXY,  # delete it if connection via VPN
 )
 
-Covid = Covid19()
+Covid = CovidNews()
 
 
 class InlineKeyboardFactory:  # provides all inline keyboards
@@ -250,41 +250,15 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
 
         elif data == CALLBACK_BUTTON_NEWS_01:
 
-            sa = bot.send_message(chat_id=chat_id,
-                                  text=f"<b><u>{Covid.get_title_news(0)}</u></b> "
-                                  f"\n\n{Covid.get_brief_description(0)}",
-                                  parse_mode='HTML')
-
-            Covid.set_current_news(0)
-            bot.delete_message(chat_id, sa.message_id - 1)
-            bot.send_message(chat_id=chat_id,
-                             text="Do you want to read more?",
-                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
+            Covid.send_message(bot=bot, chat_id=chat_id, value=0)
 
         elif data == CALLBACK_BUTTON_NEWS_02:  # Choose second news
 
-            sa = bot.send_message(chat_id=chat_id,
-                                  text=f"<b>{Covid.get_title_news(1)}</b> "
-                                  f"\n\n{Covid.get_brief_description(1)}",
-                                  parse_mode='HTML')
+            Covid.send_message(bot=bot, chat_id=chat_id, value=1)
 
-            Covid.set_current_news(1)
-            bot.delete_message(chat_id, sa.message_id - 1)
-            bot.send_message(chat_id=chat_id,
-                             text="Do you want to read more?",
-                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
         elif data == CALLBACK_BUTTON_NEWS_03:  # Choose second news
 
-            sa = bot.send_message(chat_id=chat_id,
-                                  text=f"<b>{Covid.get_title_news(2)}</b> "
-                                  f" \n\n {Covid.get_brief_description(2)}",
-                                  parse_mode='HTML')
-
-            Covid.set_current_news(2)
-            bot.delete_message(chat_id, sa.message_id - 1)
-            bot.send_message(chat_id=chat_id,
-                             text="Do you want to read more?",
-                             reply_markup=InlineKeyboardFactory.get_inline_keyboard_more_information())
+            Covid.send_message(bot=bot, chat_id=chat_id, value=2)
 
         elif data == CALLBACK_BUTTON_NEWS_04:  # Choose other news
 
@@ -326,7 +300,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                              reply_markup=InlineKeyboardFactory.get_inline_bloodtype())
         
         elif data == CALLBACK_BUTTON_BLOOD_I:
-            with open(f"personal_{chat_id}.json", "r") as handle:
+            with open(f"personal_information/personal_{chat_id}.json", "r") as handle:
                 personal = json.load(handle)
             personal.update({"blood": 1})
             with open(f"personal_{chat_id}.json", "w") as handle:
