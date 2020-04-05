@@ -126,6 +126,23 @@ def command_get_news(update: Update, context: CallbackContext):  # You can get f
 
 
 @handle_command
+def command_recommendation(update: Update, context: CallbackContext):
+    """This method send some recommendation about prevention from COVID-19"""
+    import random
+    recommendation_list = ['Wash your hands frequently',
+                           'Maintain social distancing',
+                           'Avoid touching eyes, nose and mouth',
+                           'Practice respiratory hygiene',
+                           'If you have fever, cough and difficulty breathing, seek medical care early',
+                           'Follow the news on latest coronavirus updates',
+                           'Do not spread rumors',
+                           'Check in regularly especially with those affected',
+                           'Disinfect your mobile phone after going out',
+                           'Do not drink alcohol - this contribute weaken the immune system']
+    update.message.reply_text(random.choice(recommendation_list))
+
+
+@handle_command
 def command_get_image(update: Update, context: CallbackContext):
     """This method getting an image and give choice to user
             what to do with image"""
