@@ -12,6 +12,7 @@ from selenium import webdriver
 from setup import PROXY, TOKEN
 from webdriver_manager.chrome import ChromeDriverManager
 from Covid_19 import CovidNews
+from lxml import html
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -114,7 +115,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
-    
+
     @staticmethod
     def get_inline_stayhome():
         """Get custom inline keyboard for coronavirus infection probability"""
@@ -125,7 +126,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
-    
+
     @staticmethod
     def get_inline_bloodtype():
         keyboard = [
@@ -149,7 +150,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
 
 
 class InlineCallback:  # Processes the events on inline keyboards' buttons
-    
+
     @staticmethod
     def update_data(add_data: {}, file: json):
         with open(file, "r") as handle:
@@ -157,7 +158,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
         data.update(add_data)
         with open(file, "w") as handle:
             json.dump(data, handle, ensure_ascii=False, indent=2)
-    
+
     @staticmethod
     def handle_keyboard_callback(update: Update, context: CallbackContext):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
@@ -172,7 +173,8 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
 
         elif data == CALLBACK_BUTTON_05:
-            img_h.get_contrast_img(0.5, 'initial_user_images/initial.jpg', 'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
+            img_h.get_contrast_img(0.5, 'initial_user_images/initial.jpg',
+                                   'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
             temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
                                           reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
@@ -209,56 +211,19 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                              reply_markup=reply_markup)
 
         elif data == CALLBACK_BUTTON_COVID19_RU:
-            try:
-                driver = webdriver.Chrome(ChromeDriverManager().install())
-            except ValueError:
-                driver = "ВСТАВЬТЕ_ПУТЬ_К_chromedriver.exe, например C:/Python36/chromedriver.exe"
-            # installs the web driver to run JS-tables on the website
-
-            driver.get('https://virus-zone.ru/coronavirus-v-rossii/')
-            # runs the page with covid-19 data for Russia
-
-            table = driver.find_element_by_xpath('//div[3]/div[4]/div/table')
-            # find the JS-generated table with statistics on covid-19 divided by regions
-
-            table_html = table.get_attribute('innerHTML')
-            # get the html-version of JS-generated table for parsing it
-
-            table_html = BeautifulSoup(table_html, 'html.parser')  # format it with BeautifulSoup
-
-            headings = []  # USELESS IN CODE, NEEDED JUST FOR BETTER UNDERSTANDING: headings of a table
-            for table_row in table_html.findAll('thead'):  # find html-tag for heading of a table
-                columns = table_row.findAll('th')  # find all components of an html-heading by their tag <th> </th>
-                heading = []  # stores single heading
-                for column in columns:  # for each column's heading:
-                    heading.append(column.text.strip())  # add heading without whitespaces (raw data provides heading
-                    # with a number of useless whitespaces, thus we need to get only letters)
-                headings.append(heading)  # add formatted heading
-
-            output_rows = []  # ALL rows of a table
-            for table_row in table_html.findAll('tr'):  # find html-tag for row of a table
-                columns = table_row.findAll('td')  # find each cell of a row
-                output_row = []  # SINGLE row
-                for column in columns:  # for each cell:
-                    output_row.append(column.text.strip())  # add cell to the row without whitespaces
-                output_rows.append(output_row)  # add formatted row and go to the next one
-
-            with open('covid_ru.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
-                writer = csv.writer(csvfile)  # csv writer for this file
-                writer.writerows(headings)  # firstly, add headings
-                writer.writerows(output_rows)  # then add all rows from table
-
-            with open('covid_ru.csv', 'r') as handle:  # open .csv file to get our covid-19 RU data
-                reader = handle.readlines()[2:7]  # ignore heading and 1 empty line
-                place = 0  # counter for the top-5
-                for row in reader:
-                    place += 1
-                    if any(row):  # if the line is not empty
-                        content = row.split(',')  # split the row by ',' symbol
-                        bot.send_message(chat_id=chat_id, text=f'<b>{place}.</b> '
-                                         f'{content[0]}: {content[1]} cases\n',
-                                         parse_mode=telegram.ParseMode.HTML)  # content[0] - city name,
-                                                                              # content[1] - number of cases
+            page = requests.get("https://yandex.ru/maps/covid19?ll=41.775580%2C54.894027&z=3")
+            tree = html.fromstring(page.content)
+            rows = tree.xpath('//div[@class="covid-panel-view__item"]')
+            place = 0
+            for row in rows:
+                region = row.xpath('//div[@class="covid-panel-view__item-name"]/text()')[place]
+                cases = row.xpath('//div[@class="covid-panel-view__item-cases"]/text()')[place].replace("\xa0", "")
+                place += 1
+                bot.send_message(chat_id=chat_id, text=f'<b>{place}.</b> '
+                                                       f'{region}: {cases} cases\n',
+                                 parse_mode=telegram.ParseMode.HTML)
+                if place == 5:
+                    break
 
         elif data == CALLBACK_BUTTON_NEWS_01:
 
@@ -284,14 +249,14 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
 
             temp = bot.send_message(chat_id=chat_id,
                                     text=Covid.get_href_news())
-            
+
             bot.delete_message(chat_id, temp.message_id - 1)
 
         elif data == CALLBACK_BUTTON_NEWS_07:
             temp = bot.send_message(chat_id=chat_id,
                                     text="I will be waiting for you here")
             bot.delete_message(chat_id, temp.message_id - 1)
-            
+
         elif data == CALLBACK_BUTTON_STAYHOME:
             InlineCallback.update_data({"at_home": True}, f"personal_{chat_id}.json")
             bot.send_message(chat_id=chat_id, text="Perfect! Now, select your blood type...",
