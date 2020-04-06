@@ -1,11 +1,12 @@
 import json
 import requests
 import csv
+import inline_handle
+import lxml.html as lh
 
 from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
-import inline_handle
 from setup import TOKEN, PROXY
 from auxiliary_functions import handle_command, load_history, get_data_frame, get_corona_map, handle_image
 from image_handler import ImageHandler
@@ -14,7 +15,7 @@ from googletrans import Translator
 from geopy.geocoders import Nominatim
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
-
+from lxml import html
 
 bot = Bot(
     token=TOKEN,
@@ -23,7 +24,7 @@ bot = Bot(
 
 
 @handle_command
-def command_start(update: Update,  context: CallbackContext):
+def command_start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     try:
         load_history(update)  # if file exists, load history (update for getting user ID)
@@ -180,7 +181,7 @@ def command_handle_contrast(update: Update, context: CallbackContext):
                    photo=open('initial_user_images/initial.jpg', mode='rb'), caption='Contrast',
                    reply_markup=inline_handle.InlineKeyboardFactory.get_inline_contrast_keyboard())
 
-    
+
 @handle_command
 def command_get_probability(update: Update, context: CallbackContext):
     """Returns the probability of being infected based on user answers"""
@@ -259,19 +260,19 @@ def calc_probability(chat_id):
             output_row.append(column.text.strip())  # add cell to the row without whitespaces
         output_rows.append(output_row)  # add formatted row and go to the next one
 
-    with open('covid_ru.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
+    with open('corona_information/covid_data.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
         writer = csv.writer(csvfile)  # csv writer for this file
         writer.writerows(headings)  # firstly, add headings
         writer.writerows(output_rows)  # then add all rows from table
 
-    with open('covid_ru.csv', 'r') as handle:  # open .csv file to get our covid-19 RU data
+    with open('corona_information/covid_data.csv', 'r') as handle:  # open .csv file to get our covid-19 RU data
         reader = handle.readlines()[2::]  # ignore heading and 1 empty line
         for row in reader:
             if any(row):  # if the line is not empty
                 data_country = row.split(',')[0]  # split the row by ',' symbol, select first (Country)
                 if data_country == country:
-                    translator = Translator() # to get country name in English
-                    infected = row.split(',')[1].split(' ')[0] # without last split data would be like 6453 (+678),
+                    translator = Translator()  # to get country name in English
+                    infected = row.split(',')[1].split(' ')[0]  # without last split data would be like 6453 (+678),
                     # so we don't need (+678)
                     population = CountryInfo(f"{translator.translate(country, dest='en', src='ru').text}").population()
                     # translate country name into English, then get its population using CountryInfo library
