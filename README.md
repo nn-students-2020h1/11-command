@@ -26,6 +26,9 @@ This is a repository for Telegram bot that will be developed by 11th team during
 * `/black_white` - get a black & white version of the image (needs an image to be uploaded firstly);
 * `/contrast` - change the contrast level of the image (needs an image to be uploaded firstly)
 * `/corona_stat` - get the last coronavirus statistics
+* `/news` - get fresh news from Yandex.ru about COVID - 19
+* `/infected` - get the probability of you getting COVID - 19
+* `/recommendation` - get the recommendations to avoid COVID - 19
 
 ## Support
 

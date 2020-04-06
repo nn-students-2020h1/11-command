@@ -9,7 +9,6 @@ from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandle
 from inline_handle import InlineCallback
 from setup import TOKEN, PROXY
 
-
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -40,7 +39,13 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('fact', tg.command_fact))
     updater.dispatcher.add_handler(CommandHandler('black_white', tg.command_get_white_black_img))
     updater.dispatcher.add_handler(CommandHandler('contrast', tg.command_handle_contrast))
+    updater.dispatcher.add_handler(CommandHandler('news', tg.command_get_news))
+    updater.dispatcher.add_handler(CommandHandler('infected', tg.command_get_probability))
+    updater.dispatcher.add_handler(CommandHandler('recommendation', tg.command_recommendation))
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, tg.command_get_image))
+    
+    # location handler
+    updater.dispatcher.add_handler(MessageHandler(Filters.location, tg.get_location))
 
     # inline handler
     updater.dispatcher.add_handler(CallbackQueryHandler(callback=InlineCallback.handle_keyboard_callback))

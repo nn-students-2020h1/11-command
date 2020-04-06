@@ -6,3 +6,6 @@ bs4
 lxml
 folium
 geopy
+selenium
+webdriver-manager
+googletrans
