@@ -1,8 +1,8 @@
 import requests
-from bs4 import BeautifulSoup
-
-from random import shuffle
 import inline_handle
+
+from bs4 import BeautifulSoup
+from random import shuffle
 
 
 class CovidNews:
@@ -21,7 +21,7 @@ class CovidNews:
         bot.delete_message(chat_id, temp.message_id - 1)
         bot.send_message(chat_id=chat_id,
                          text="Do you want to read more?",
-                         reply_markup=inline_handle.InlineKeyboardFactory.get_inline_keyboard_more_information())
+                         reply_markup=inline_handle.InlineKeyboardFactory.create_inline_keyboard("more_info"))
 
     def set_current_news(self, value):
         self._current_news = value
