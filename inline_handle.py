@@ -42,7 +42,7 @@ bot: Bot = Bot(
     base_url=PROXY,  # delete it if connection via VPN
 )
 
-Covid = CovidNews()
+COVID = CovidNews()
 
 
 class InlineKeyboardFactory:  # provides all inline keyboards
@@ -77,18 +77,18 @@ class InlineKeyboardFactory:  # provides all inline keyboards
 
     @staticmethod
     def get_inline_news_keyboard():  # Get three news buttons
-        Covid.shuffle_news()
+        COVID.shuffle_news()
         keyboard = [
             [
-                InlineKeyboardButton(Covid.get_title_news(0),
+                InlineKeyboardButton(COVID.get_title_news(0),
                                      callback_data=CALLBACK_BUTTON_NEWS_01)
             ],
             [
-                InlineKeyboardButton(Covid.get_title_news(1),
+                InlineKeyboardButton(COVID.get_title_news(1),
                                      callback_data=CALLBACK_BUTTON_NEWS_02)
             ],
             [
-                InlineKeyboardButton(Covid.get_title_news(2),
+                InlineKeyboardButton(COVID.get_title_news(2),
                                      callback_data=CALLBACK_BUTTON_NEWS_03)
             ],
             [
@@ -227,15 +227,15 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
 
         elif data == CALLBACK_BUTTON_NEWS_01:
 
-            Covid.send_message(bot=bot, chat_id=chat_id, value=0)
+            COVID.send_message(bot=bot, chat_id=chat_id, value=0)
 
         elif data == CALLBACK_BUTTON_NEWS_02:  # Choose second news
 
-            Covid.send_message(bot=bot, chat_id=chat_id, value=1)
+            COVID.send_message(bot=bot, chat_id=chat_id, value=1)
 
         elif data == CALLBACK_BUTTON_NEWS_03:  # Choose second news
 
-            Covid.send_message(bot=bot, chat_id=chat_id, value=2)
+            COVID.send_message(bot=bot, chat_id=chat_id, value=2)
 
         elif data == CALLBACK_BUTTON_NEWS_04:  # Choose other news
 
@@ -248,7 +248,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
         elif data == CALLBACK_BUTTON_NEWS_06:  # Choose read more about certain news
 
             temp = bot.send_message(chat_id=chat_id,
-                                    text=Covid.get_href_news())
+                                    text=COVID.get_href_news())
 
             bot.delete_message(chat_id, temp.message_id - 1)
 
