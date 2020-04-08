@@ -16,7 +16,7 @@ class Deck:
                 self.cards.append(Card(color, value))
 
         for special_card in card.SPECIAL_CARDS:
-            self.cards.append(Card(None, None, special=True))
+            self.cards.append(Card(None, None, special=special_card))
 
         self.shuffle_cards()
 
@@ -26,7 +26,6 @@ class Deck:
     def get_card(self):
         try:
             card = self.cards.pop()
-            self.logger.debug("Drawing card " + str(card))
             return card
         except IndexError:
             if len(self.discard_pile):
@@ -36,3 +35,6 @@ class Deck:
                 return self.get_card()
             else:
                 raise EmptyDeckError()
+
+    def beaten(self, card):
+        self.discard_pile.append(card)
