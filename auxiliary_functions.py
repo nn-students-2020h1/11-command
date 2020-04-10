@@ -6,12 +6,11 @@ import pandas as pd
 import folium
 from bs4 import BeautifulSoup
 from telegram import Update, ChatAction, Bot
-from setup import TOKEN, PROXY
+from setup import TOKEN
 
 
 bot = Bot(
-    token=TOKEN,
-    base_url=PROXY,  # delete it if connection via VPN
+    token=TOKEN  # delete it if connection via VPN
 )
 
 USERS_ACTION = []
