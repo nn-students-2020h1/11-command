@@ -1,8 +1,7 @@
-RED = "color_red"
-GREEN = "color_green"
-BLUE = "color_blue"
-YELLOW = "color_yellow"
-ALL = "color_independence"
+RED = "red"
+GREEN = "green"
+BLUE = "blue"
+YELLOW = "yellow"
 
 COLORS = (RED, GREEN, BLUE, YELLOW)
 
