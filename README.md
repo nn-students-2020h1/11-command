@@ -29,6 +29,7 @@ This is a repository for Telegram bot that will be developed by 11th team during
 * `/news` - get fresh news from Yandex.ru about COVID - 19
 * `/infected` - get the probability of you getting COVID - 19
 * `/recommendation` - get the recommendations to avoid COVID - 19
+* `/stat 'your region'` - get the information and a plot of spreading of COVID-19 in your region
 
 ## Support
 
