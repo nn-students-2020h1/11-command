@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 from telegram.ext import CallbackContext
 from selenium import webdriver
-from setup import PROXY, TOKEN
+from setup import TOKEN
 from webdriver_manager.chrome import ChromeDriverManager
 from Covid_19 import CovidNews
 from lxml import html
@@ -38,8 +38,7 @@ CALLBACK_BUTTON_BLOOD_III = "callback_blood_III"
 CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
 
 bot: Bot = Bot(
-    token=TOKEN,
-    base_url=PROXY,  # delete it if connection via VPN
+    token=TOKEN  # delete it if connection via VPN
 )
 
 Covid = CovidNews()

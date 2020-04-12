@@ -7,7 +7,7 @@ import lxml.html as lh
 from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
-from setup import TOKEN, PROXY
+from setup import TOKEN
 from auxiliary_functions import handle_command, load_history, get_data_frame, get_corona_map, handle_image
 from image_handler import ImageHandler
 from countryinfo import CountryInfo
@@ -16,10 +16,10 @@ from geopy.geocoders import Nominatim
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from lxml import html
+from Covid_19 import CovidStat
 
 bot = Bot(
-    token=TOKEN,
-    base_url=PROXY,  # delete it if connection via VPN
+    token=TOKEN  # delete it if connection via VPN
 )
 
 
@@ -172,6 +172,24 @@ def command_get_white_black_img(update: Update, context: CallbackContext):
     bot.send_message(chat_id=update.message.chat_id,
                      text="Upload new image",
                      reply_markup=reply_markup)
+
+
+def command_get_stat_in_region(update: Update, context: CallbackContext):
+    user_message = update.message['text']
+    user_request = user_message.replace('/stat', '').strip()
+    covid_request = CovidStat()
+    if user_request in covid_request.get_list_of_regions():
+        href = covid_request.get_specific_region_href(region_name=user_request)
+        print(href)
+        covid_request.get_and_save_csv_table(href_by_region=href, user_id=update.message.chat_id)
+        covid_request.get_plot_region()
+        bot.send_photo(chat_id=update.effective_message.chat_id,
+                       photo=open(covid_request.get_path_to_plot_file(), mode='rb'))
+    else:
+        regions = ''
+        for i in covid_request.get_list_of_regions():
+            regions += i + '\n'
+        update.message.reply_text(regions)
 
 
 @handle_command
