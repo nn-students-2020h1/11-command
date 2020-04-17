@@ -1,5 +1,6 @@
 __pycache__
 bin
+venv
 setup.py
 .json
 Sesorov_bot.py
