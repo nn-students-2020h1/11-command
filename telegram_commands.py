@@ -71,13 +71,30 @@ def command_history(update: Update, context: CallbackContext):
         update.message.reply_text(output)
 
 
+def get_quote(url: str):
+    try:
+        fact = requests.get(url=url)
+        if fact is None or not fact.ok:
+            raise ConnectionError
+        else:
+            try:
+                fact = fact.json()["all"][0]
+                quote = f"<i>{fact['text']}</i>"
+                author = f"<b>Author: {fact['user']['name']['first']} {fact['user']['name']['last']}</b>"
+            except KeyError:
+                return ["You're awesome.", "Our KeyError"]
+        return [quote, author]
+    except ConnectionError:
+        return ["You're awesome.", "Our ConnectionError"]
+
+
 @handle_command
 def command_fact(update: Update, context: CallbackContext):
     """This method is processing the most popular fact and sending to user"""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-    fact = requests.get("https://cat-fact.herokuapp.com/facts").json()["all"][0]
-    quote = f"<i>{fact['text']}</i>"
-    author = f"<b>Author: {fact['user']['name']['first']} {fact['user']['name']['last']}</b>"
+    fact_author = get_quote("https://cat-fact.herokuapp.com/facts")
+    quote = fact_author[0]
+    author = fact_author[1]
     update.message.reply_text("Well, time for a good quote...")
     update.message.reply_text(f'«{quote}»\n\t                     一 {author:}', parse_mode=ParseMode.HTML)
 
@@ -278,7 +295,8 @@ def calc_probability(chat_id):
             output_row.append(column.text.strip())  # add cell to the row without whitespaces
         output_rows.append(output_row)  # add formatted row and go to the next one
 
-    with open('corona_information/covid_data.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
+    with open('corona_information/covid_data.csv', 'w',
+              newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
         writer = csv.writer(csvfile)  # csv writer for this file
         writer.writerows(headings)  # firstly, add headings
         writer.writerows(output_rows)  # then add all rows from table

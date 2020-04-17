@@ -38,7 +38,10 @@ def handle_command(func):
 def load_history(update: Update):
     """Upload user's history"""
     global USERS_ACTION
-    if os.stat(f"user_history/{update.message.chat.id}.json").st_size == 0:
+    try:
+        if os.stat(f"user_history/{update.message.chat.id}.json").st_size == 0:
+            return
+    except FileNotFoundError:
         return
     with open(f"{update.message.chat.id}.json", mode="r", encoding="utf-8") as handle:  # opening file named user ID
         USERS_ACTION = json.load(handle)  # getting the user actions from file
@@ -46,9 +49,14 @@ def load_history(update: Update):
 
 def save_history(update: Update):
     """Save user's history"""
-    with open(f"user_history/{update.message.chat.id}.json",
-              mode="w", encoding="utf-8") as handle:  # opening file named user ID
-        json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
+    try:
+        with open(f"user_history/{update.message.chat.id}.json",
+                  mode="w", encoding="utf-8") as handle:  # opening file named user ID
+            json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
+    except FileNotFoundError:
+        with open(f"user_history/{update.message.chat.id}.json",
+                  mode="w+") as handle:  # opening file named user ID
+            json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
 
 
 def get_data_frame(last_csv_url):
