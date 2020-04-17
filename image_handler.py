@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance
 
 
 class ImageHandler:

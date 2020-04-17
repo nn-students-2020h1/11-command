@@ -1,25 +1,24 @@
 import json
 import requests
 import csv
-import lxml.html as lh
+import inline_handle
 
 from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from telegram.ext import CallbackContext
-from inline_handle import InlineKeyboardFactory
 from bs4 import BeautifulSoup
-from setup import TOKEN
-from auxiliary_functions import handle_command, load_history, get_data_frame, get_corona_map, handle_image
+from setup import TOKEN, PROXY
+from auxiliary_functions import handle_command, load_history, handle_image
 from image_handler import ImageHandler
 from countryinfo import CountryInfo
 from googletrans import Translator
 from geopy.geocoders import Nominatim
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
-from lxml import html
-from Covid_19 import CovidStat
+from covid_stat import CovidRegionStat, CovidWorldStat
 
 bot = Bot(
-    token=TOKEN  # delete it if connection via VPN
+    token=TOKEN,
+#    base_url=PROXY,  # delete it if connection via VPN
 )
 
 
@@ -58,19 +57,6 @@ def command_echo(update: Update, context: CallbackContext):
     update.message.reply_text(update.message.text)
 
 
-def command_history(update: Update, context: CallbackContext):
-    """Display 5 latest actions when the command /history is issued."""
-    update.message.reply_text("Last 5 actions:")
-    with open(f"user_history/{update.message.chat.id}.json", "r") as handle:
-        data = json.load(handle)
-        output = ""
-        for action in data:
-            for key, value in action.items():
-                output += f"{key}: {value}\n"
-            output += "\n"
-        update.message.reply_text(output)
-
-
 def get_quote(url: str):
     try:
         fact = requests.get(url=url)
@@ -88,13 +74,26 @@ def get_quote(url: str):
         return ["You're awesome.", "Our ConnectionError"]
 
 
+def command_history(update: Update, context: CallbackContext):
+    """Display 5 latest actions when the command /history is issued."""
+    update.message.reply_text("Last 5 actions:")
+    with open(f"user_history/{update.message.chat.id}.json", "r") as handle:
+        data = json.load(handle)
+        output = ""
+        for action in data:
+            for key, value in action.items():
+                output += f"{key}: {value}\n"
+            output += "\n"
+        update.message.reply_text(output)
+
+
 @handle_command
 def command_fact(update: Update, context: CallbackContext):
     """This method is processing the most popular fact and sending to user"""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-    fact_author = get_quote("https://cat-fact.herokuapp.com/facts")
-    quote = fact_author[0]
-    author = fact_author[1]
+    fact = requests.get("https://cat-fact.herokuapp.com/facts").json()["all"][0]
+    quote = f"<i>{fact['text']}</i>"
+    author = f"<b>Author: {fact['user']['name']['first']} {fact['user']['name']['last']}</b>"
     update.message.reply_text("Well, time for a good quote...")
     update.message.reply_text(f'«{quote}»\n\t                     一 {author:}', parse_mode=ParseMode.HTML)
 
@@ -103,36 +102,16 @@ def command_fact(update: Update, context: CallbackContext):
 def command_corona_stat(update: Update, context: CallbackContext):
     """This method is processing statistic's corona virus"""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-    response = requests.get(
-        'https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
-    if response.status_code == 200:  # if the website is up, let's backup data
-        with open('corona_information/corona_stat.html', "wb+") as handle:
-            handle.write(response.content)
-    with open('corona_information/corona_stat.html', "r") as handle:
-        soup = BeautifulSoup(handle.read(), 'lxml')  # Use library bs4
-    update.message.reply_text('Top 5 provinces by new infected:')
-    bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-    last_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-2]).dropna()  # Get last csv
-    prev_df = get_data_frame(soup.find_all('tr', {'class': 'js-navigation-item'})[-3]).dropna()  # Get previous csv
-    last_df = last_df.sort_values(by=['Province_State']).reset_index(drop=True)  # Reset all indexes
-    prev_df = prev_df.append(last_df[~last_df['Province_State'].isin(prev_df['Province_State'])])
-    prev_df = prev_df.sort_values(by=['Province_State']).reset_index(drop=True)
-    last_df['Confirmed'] = last_df['Confirmed'] - prev_df['Confirmed']  # Get count confirmed
-    last_df.loc[last_df['Confirmed'] < 0] *= -1  # If new entry, it'll be less than zero, 'cause we need to change it
-    last_df = last_df[last_df['Confirmed'] > 0]
-    last_df = last_df.sort_values(by=['Confirmed'], ascending=False)
-    place = 1
-    output = ''
-    for i in last_df.index[:5]:
-        if last_df['Province_State'][i] != '':
-            output += f"<b>{place}</b> {last_df['Combined_Key'][i]} - {last_df['Confirmed'][i]}\n"
-        place += 1
+
+    top_province = CovidWorldStat()
+
+    output = top_province.get_difference_disease(top_province.get_today_df(), top_province.get_yesterday_df())
+
     bot.send_message(chat_id=update.effective_message.chat_id, text=output,
-                     reply_markup=InlineKeyboardFactory.create_inline_keyboard("coronavirus"),
+                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_coronavirus_keyboard(),
                      parse_mode=ParseMode.HTML)
 
     update.message.reply_text("Your map is processing. Please, wait...")
-    get_corona_map(data_frame=last_df)  # Get map with sick
     bot.send_document(chat_id=update.message.chat_id,  # Send to user map with sick
                       document=open("corona_information/map.html", mode='rb'))
 
@@ -141,7 +120,7 @@ def command_corona_stat(update: Update, context: CallbackContext):
 def command_get_news(update: Update, context: CallbackContext):  # You can get fresh news from Yandex
     bot.send_message(chat_id=update.effective_message.chat_id,
                      text='Choose news',
-                     reply_markup=InlineKeyboardFactory.create_inline_keyboard("news"))
+                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_news_keyboard())
 
 
 @handle_command
@@ -191,13 +170,14 @@ def command_get_white_black_img(update: Update, context: CallbackContext):
                      reply_markup=reply_markup)
 
 
+@handle_command
 def command_get_stat_in_region(update: Update, context: CallbackContext):
     user_message = update.message['text']
     user_request = user_message.replace('/stat', '').strip()
-    covid_request = CovidStat()
+    covid_request = CovidRegionStat()
+
     if user_request in covid_request.get_list_of_regions():
         href = covid_request.get_specific_region_href(region_name=user_request)
-        print(href)
         covid_request.get_and_save_csv_table(href_by_region=href, user_id=update.message.chat_id)
         covid_request.get_plot_region()
         bot.send_photo(chat_id=update.effective_message.chat_id,
@@ -214,7 +194,7 @@ def command_handle_contrast(update: Update, context: CallbackContext):
     """This image is processing by the contrast filter"""
     bot.send_photo(chat_id=update.effective_message.chat_id,
                    photo=open('initial_user_images/initial.jpg', mode='rb'), caption='Contrast',
-                   reply_markup=InlineKeyboardFactory.create_inline_keyboard("contrast"))
+                   reply_markup=inline_handle.InlineKeyboardFactory.get_inline_contrast_keyboard())
 
 
 @handle_command
@@ -233,7 +213,7 @@ def get_location(update: Update, context: CallbackContext):
         json.dump({"location": location}, handle, ensure_ascii=False, indent=2)
     bot.send_message(chat_id=update.message.chat_id, text="Got your location!", reply_markup=ReplyKeyboardRemove())
     bot.send_message(chat_id=update.message.chat_id, text="Next, do you stay at home during quarantine?",
-                     reply_markup=InlineKeyboardFactory.create_inline_keyboard("stayhome"))
+                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_stayhome())
 
 
 def calc_probability(chat_id):
@@ -295,8 +275,7 @@ def calc_probability(chat_id):
             output_row.append(column.text.strip())  # add cell to the row without whitespaces
         output_rows.append(output_row)  # add formatted row and go to the next one
 
-    with open('corona_information/covid_data.csv', 'w',
-              newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
+    with open('corona_information/covid_data.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
         writer = csv.writer(csvfile)  # csv writer for this file
         writer.writerows(headings)  # firstly, add headings
         writer.writerows(output_rows)  # then add all rows from table

@@ -9,3 +9,4 @@ geopy
 selenium
 webdriver-manager
 googletrans
+matplotlib
