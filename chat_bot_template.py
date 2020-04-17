@@ -7,7 +7,7 @@ import telegram_commands as tg
 from telegram import Update, Bot
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, CallbackQueryHandler
 from inline_handle import InlineCallback
-from setup import TOKEN
+from setup import TOKEN, PROXY
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -16,8 +16,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 bot = Bot(
-    token=TOKEN # delete it if connection via VPN
+    token=TOKEN,
+    #base_url=PROXY,  # delete it if connection via VPN
 )
+
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
 
@@ -42,7 +44,6 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('infected', tg.command_get_probability))
     updater.dispatcher.add_handler(CommandHandler('recommendation', tg.command_recommendation))
     updater.dispatcher.add_handler(CommandHandler('stat', tg.command_get_stat_in_region))
-
 
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, tg.command_get_image))
     
