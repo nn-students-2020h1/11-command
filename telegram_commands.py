@@ -1,11 +1,11 @@
 import json
 import requests
 import csv
-import inline_handle
 import lxml.html as lh
 
 from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from telegram.ext import CallbackContext
+from inline_handle import InlineKeyboardFactory
 from bs4 import BeautifulSoup
 from setup import TOKEN
 from auxiliary_functions import handle_command, load_history, get_data_frame, get_corona_map, handle_image
@@ -111,7 +111,7 @@ def command_corona_stat(update: Update, context: CallbackContext):
             output += f"<b>{place}</b> {last_df['Combined_Key'][i]} - {last_df['Confirmed'][i]}\n"
         place += 1
     bot.send_message(chat_id=update.effective_message.chat_id, text=output,
-                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_coronavirus_keyboard(),
+                     reply_markup=InlineKeyboardFactory.create_inline_keyboard("coronavirus"),
                      parse_mode=ParseMode.HTML)
 
     update.message.reply_text("Your map is processing. Please, wait...")
@@ -124,7 +124,7 @@ def command_corona_stat(update: Update, context: CallbackContext):
 def command_get_news(update: Update, context: CallbackContext):  # You can get fresh news from Yandex
     bot.send_message(chat_id=update.effective_message.chat_id,
                      text='Choose news',
-                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_news_keyboard())
+                     reply_markup=InlineKeyboardFactory.create_inline_keyboard("news"))
 
 
 @handle_command
@@ -197,7 +197,7 @@ def command_handle_contrast(update: Update, context: CallbackContext):
     """This image is processing by the contrast filter"""
     bot.send_photo(chat_id=update.effective_message.chat_id,
                    photo=open('initial_user_images/initial.jpg', mode='rb'), caption='Contrast',
-                   reply_markup=inline_handle.InlineKeyboardFactory.get_inline_contrast_keyboard())
+                   reply_markup=InlineKeyboardFactory.create_inline_keyboard("contrast"))
 
 
 @handle_command
@@ -216,7 +216,7 @@ def get_location(update: Update, context: CallbackContext):
         json.dump({"location": location}, handle, ensure_ascii=False, indent=2)
     bot.send_message(chat_id=update.message.chat_id, text="Got your location!", reply_markup=ReplyKeyboardRemove())
     bot.send_message(chat_id=update.message.chat_id, text="Next, do you stay at home during quarantine?",
-                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_stayhome())
+                     reply_markup=InlineKeyboardFactory.create_inline_keyboard("stayhome"))
 
 
 def calc_probability(chat_id):
