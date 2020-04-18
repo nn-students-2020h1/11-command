@@ -26,7 +26,7 @@ class CovidRegionStat:
         try:
             return self._all_regions[region_name]
         except RuntimeError:
-            return None
+            raise Exception("Don't exist any region")
 
     @staticmethod
     def get_regions_information():
