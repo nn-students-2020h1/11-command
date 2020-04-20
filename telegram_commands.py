@@ -105,9 +105,12 @@ def command_corona_stat(update: Update, context: CallbackContext):
 
     top_province = CovidWorldStat()
 
-    output = top_province.get_difference_disease(top_province.get_today_df(), top_province.get_yesterday_df())
+    top_covid_places = top_province.get_difference_disease(top_province.get_today_df(), top_province.get_yesterday_df())
+    top_places_message = ''
+    for place in top_covid_places:
+        top_places_message += place
 
-    bot.send_message(chat_id=update.effective_message.chat_id, text=output,
+    bot.send_message(chat_id=update.effective_message.chat_id, text=top_places_message,
                      reply_markup=inline_handle.InlineKeyboardFactory.get_inline_coronavirus_keyboard(),
                      parse_mode=ParseMode.HTML)
 
