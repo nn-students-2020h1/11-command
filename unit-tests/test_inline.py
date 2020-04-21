@@ -5,8 +5,14 @@ from unittest.mock import patch
 import auxiliary_functions
 import user_history
 import os
-from inline_handle import InlineKeyboardFactory, InlineCallback
+import inline_handle
+from inline_handle import InlineKeyboardFactory, InlineCallback, bot
+from inline_handle import CALLBACK_BUTTON_01
 from telegram import InlineKeyboardMarkup
+import image_handler
+
+def yet_another_func(*args):
+    return ''
 
 
 class TestKeyboardFactory(unittest.TestCase):
@@ -37,3 +43,13 @@ class TestInlineCallback(unittest.TestCase):
         with patch('inline_handle.open', mock_open_handler, create=True):
             file_name, file_data = InlineCallback.update_data({"new": "data"}, "file.json")
         self.assertEqual(file_data, {"new": "data"})
+
+    """TEST BELOW FAILS"""
+    @patch("inline_handle.img_h.get_contrast_img", mock.MagicMock)
+    @patch("inline_handle.bot.send_photo", mock.MagicMock)
+    @patch("inline_handle.bot.delete_message", mock.Mock)
+    def test_callback(self):
+        with patch('telegram.Update') as mock_update:
+            mock_update.effective_message.chat_id = 0
+            mock_update.callback_query.data = CALLBACK_BUTTON_01
+            self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update), CALLBACK_BUTTON_01)
