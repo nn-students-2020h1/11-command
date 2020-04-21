@@ -192,12 +192,14 @@ def command_get_stat_in_region(update: Update, context: CallbackContext):
         update.message.reply_text(regions)
 
 
-@handle_command
-def command_handle_contrast(update: Update, context: CallbackContext):
+def command_handle_contrast(update: Update):
     """This image is processing by the contrast filter"""
-    bot.send_photo(chat_id=update.effective_message.chat_id,
-                   photo=open('initial_user_images/initial.jpg', mode='rb'), caption='Contrast',
-                   reply_markup=inline_handle.InlineKeyboardFactory.get_inline_contrast_keyboard())
+    try:
+        bot.send_photo(chat_id=update.effective_message.chat_id,
+                       photo=open('initial_user_images/initial.jpg', mode='rb'), caption='Contrast',
+                       reply_markup=inline_handle.InlineKeyboardFactory.get_inline_contrast_keyboard())
+    except FileNotFoundError:
+        return "Initial image wasn't found."
 
 
 @handle_command

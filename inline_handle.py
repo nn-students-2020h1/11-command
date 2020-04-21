@@ -155,6 +155,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
         data.update(add_data)
         with open(file, "w") as handle:
             json.dump(data, handle, ensure_ascii=False, indent=2)
+        return file, add_data
 
     @staticmethod
     def handle_keyboard_callback(update: Update, context: CallbackContext):  # Gets callback_data from the pushed button
