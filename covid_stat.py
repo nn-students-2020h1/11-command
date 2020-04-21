@@ -26,7 +26,7 @@ class CovidRegionStat:
         try:
             return self._all_regions[region_name]
         except RuntimeError:
-            return None
+            raise Exception("Don't exist any region")
 
     @staticmethod
     def get_regions_information():
@@ -115,26 +115,30 @@ class CovidWorldStat:
         return self.yesterday_df
 
     @staticmethod
-    def get_difference_disease(today_df, yesterday_df, top=5):
+    def get_difference_disease(today_df: pd.DataFrame, yesterday_df: pd.DataFrame, top=5) -> list:
 
         today_df = today_df.sort_values(by=['Province_State']).reset_index(drop=True)  # Reset all indexes
+        yesterday_df = yesterday_df.sort_values(by=['Province_State']).reset_index(drop=True)  # Reset all indexes
         yesterday_df = yesterday_df.append(today_df[~today_df['Province_State'].isin(yesterday_df['Province_State'])])
         yesterday_df = yesterday_df.sort_values(by=['Province_State']).reset_index(drop=True)
         today_df['Confirmed'] = today_df['Confirmed'] - yesterday_df['Confirmed']  # Get count confirmed
         today_df.loc[
             today_df['Confirmed'] < 0] *= -1  # If new entry, it'll be less than zero, 'cause we need to change it
-        last_df = today_df[today_df['Confirmed'] > 0]
-        last_df = last_df.sort_values(by=['Confirmed'], ascending=False)
+        today_df = today_df[today_df['Confirmed'] > 0]
+        today_df = today_df.sort_values(by=['Confirmed'], ascending=False)
 
         place = 1
-        output = ''
-        for i in last_df.index[:top]:
-            if last_df['Province_State'][i] != '':
-                output += f"<b>{place}</b> {last_df['Combined_Key'][i]} - {last_df['Confirmed'][i]}\n"
-            place += 1
-        CovidWorldStat.get_corona_map(data_frame=last_df)  # Get map with sick
+        top_covid_places = []
+        for i in today_df.index:
+            if top + 1 == place:
+                break
+            if today_df['Province_State'][i] != '':
+                output = f"<b>{place}</b>  {today_df['Combined_Key'][i]} - {today_df['Confirmed'][i]}\n"
+                place += 1
+                top_covid_places.append(output)
+        CovidWorldStat.get_covid_map(data_frame=today_df)  # Get map with sick
 
-        return output
+        return top_covid_places
 
     @staticmethod
     def parse_html_page(response, idx):
@@ -144,8 +148,8 @@ class CovidWorldStat:
 
     @staticmethod
     def make_corona_stat_request():
-        return requests.get('https://github.com/CSSEGISandData/'
-                            'COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports')
+        return requests.get('https://github.com/CSSEGISandData/COVID-19/tree/master/'
+                            'csse_covid_19_data/csse_covid_19_daily_reports')
 
     @staticmethod
     def get_data_frame(last_csv_url):
@@ -155,10 +159,10 @@ class CovidWorldStat:
         return pd.read_csv("https://github.com/" + csv_url).dropna()  # Open our csv file with pandas
 
     @staticmethod
-    def get_corona_map(data_frame):
+    def get_covid_map(data_frame):
         maps = folium.Map(location=[43.01093752182322, 11.903098859375019], zoom_start=2.4, tiles='Stamen Terrain')
         """Creating map"""
-        for i in data_frame.index.dropna():
+        for i in data_frame.index:
             try:
                 if data_frame['Confirmed'][i] >= 1000:
                     color = 'red'

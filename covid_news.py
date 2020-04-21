@@ -22,21 +22,21 @@ class CovidNews:
         self.set_current_news(value)
         bot.delete_message(chat_id, temp.message_id - 1)
 
-    def set_current_news(self, value):
+    def set_current_news(self, value: int):
         self._current_news = value
 
     def shuffle_news(self):  # Shuffle all the news in list
         shuffle(self._title_list)
 
-    def get_title_news(self, index):  # Get title of specific news
+    def get_title_news(self, index: int) -> str:  # Get title of specific news
         return self._title_list[index]
 
-    def get_brief_description(self, index):  # Get brief description certain news
+    def get_brief_description(self, index: int) -> str:  # Get brief description certain news
         """Title of news is dictionary key, thus search for specific news will be in constant time O(1)
         because collision won't be, one news corresponds to specif link """
         return self._news_information[self.get_title_news(index)][1]
 
-    def get_href_news(self):  # Get link of specific news
+    def get_href_news(self) -> str:  # Get link of specific news
         return self._news_information[self.get_title_news(self._current_news)][0]
 
     @staticmethod
