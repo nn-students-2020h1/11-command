@@ -19,14 +19,14 @@ class CovidRegionStat:
     def get_path_to_plot_file(self):
         return self._path_plot_file
 
-    def get_list_of_regions(self):
+    def get_list_of_regions(self) -> list:
         return list(self._all_regions.keys())
 
-    def get_specific_region_href(self, region_name):
-        try:
+    def get_specific_region_href(self, region_name) -> str:
+        if region_name in self._all_regions:
             return self._all_regions[region_name]
-        except RuntimeError:
-            raise Exception("Don't exist any region")
+
+        raise Exception("Don't exist a such region")
 
     @staticmethod
     def get_regions_information():
