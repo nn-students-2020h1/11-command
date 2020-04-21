@@ -1,6 +1,6 @@
 python-telegram-bot
 requests
-PIL
+Pillow
 pandas
 bs4
 lxml
