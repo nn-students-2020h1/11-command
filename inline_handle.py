@@ -158,7 +158,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
         return file, add_data
 
     @staticmethod
-    def handle_keyboard_callback(update: Update, context: CallbackContext):  # Gets callback_data from the pushed button
+    def handle_keyboard_callback(update: Update):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
         data = query.data  # callback_data of pushed button
         chat_id = update.effective_message.chat_id  # chat id for sending messages
@@ -169,6 +169,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
                                           reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            return CALLBACK_BUTTON_01
 
         elif data == CALLBACK_BUTTON_05:
             img_h.get_contrast_img(0.5, 'initial_user_images/initial.jpg',
