@@ -22,7 +22,7 @@ class TestHomeWork(unittest.TestCase):
 def get_list_of_files():
     path = os.path.abspath(os.curdir)
 
-    path = path.replace(r'unit-tests', "")
+    path = path.replace(r'tests', "")
     path = path[:-1]
 
     for top, dirs, files in os.walk(path):
