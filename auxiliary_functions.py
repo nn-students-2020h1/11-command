@@ -36,8 +36,11 @@ def handle_command(func):
 def load_history(update: Update):
     """Upload user's history"""
     global USERS_ACTION
-    if os.stat(f"user_history/{update.message.chat.id}.json").st_size == 0:
-        return
+    try:
+        if os.stat(f"user_history/{update.message.chat.id}.json").st_size == 0:
+            return None
+    except FileNotFoundError:
+        return None
     with open(f"{update.message.chat.id}.json", mode="r", encoding="utf-8") as handle:  # opening file named user ID
         USERS_ACTION = json.load(handle)  # getting the user actions from file
 
