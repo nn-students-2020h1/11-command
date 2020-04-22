@@ -22,7 +22,7 @@ class HomeWorkTest(unittest.TestCase):
 
         path = os.path.abspath(os.curdir)
 
-        path = path.replace('unit-tests', 'initial_user_images')
+        path = path.replace('tests', 'initial_user_images')
         self.assertFalse(len(os.listdir(path)))
         path = path.replace('initial_user_images', 'result_user_images')
         self.assertFalse(len(os.listdir(path)))
