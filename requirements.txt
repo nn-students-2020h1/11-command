@@ -10,3 +10,4 @@ selenium
 webdriver-manager
 googletrans
 matplotlib
+countryinfo
