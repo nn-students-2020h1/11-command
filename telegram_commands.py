@@ -192,7 +192,7 @@ def command_get_stat_in_region(update: Update, context: CallbackContext):
         update.message.reply_text(regions)
 
 
-def command_handle_contrast(update: Update):
+def command_handle_contrast(update: Update, context = None):
     """This image is processing by the contrast filter"""
     try:
         bot.send_photo(chat_id=update.effective_message.chat_id,
