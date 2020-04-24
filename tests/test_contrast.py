@@ -19,11 +19,10 @@ def mock_decorator(func):
 
 class TestContrast(unittest.TestCase):
 
-    def test_change_contrast(self):
-        get_contrast_img(5.0, "TEST_initial.jpg", "TEST_res.jpg")
-        self.assertNotEqual(Image.open("TEST_initial.jpg"), Image.open("TEST_res.jpg"))
+    def test_no_img_to_change_contrast(self):
+        self.assertEqual("File not found.", get_contrast_img(5.0, "test", "test"))
 
-    def test_no_image(self):
+    def test_no_image_to_send(self):
         with patch('telegram.Update') as mock_update:
             mock_update.message.chat.id = 0
         with patch("telegram_commands.bot.send_photo") as mock_image:

@@ -19,7 +19,10 @@ class ImageHandler:
 
 
 def get_contrast_img(factor, base_img, res_img):
-    im = Image.open(base_img)
-    enhancer = ImageEnhance.Contrast(im)
-    enhanced_im = enhancer.enhance(1.0 + factor)
-    enhanced_im.save(res_img)
+    try:
+        im = Image.open(base_img)
+        enhancer = ImageEnhance.Contrast(im)
+        enhanced_im = enhancer.enhance(1.0 + factor)
+        enhanced_im.save(res_img)
+    except FileNotFoundError:
+        return "File not found."
