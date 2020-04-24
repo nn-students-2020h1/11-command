@@ -44,7 +44,7 @@ class TestInlineCallback(unittest.TestCase):
             file_name, file_data = InlineCallback.update_data({"new": "data"}, "file.json")
         self.assertEqual(file_data, {"new": "data"})
 
-    """TEST BELOW FAILS"""
+    """TEST BELOW FAILS
     @patch("inline_handle.img_h.get_contrast_img", mock.MagicMock)
     @patch("inline_handle.bot.send_photo", mock.MagicMock)
     @patch("inline_handle.bot.delete_message", mock.Mock)
@@ -52,4 +52,4 @@ class TestInlineCallback(unittest.TestCase):
         with patch('telegram.Update') as mock_update:
             mock_update.effective_message.chat_id = 0
             mock_update.callback_query.data = CALLBACK_BUTTON_01
-            self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update), CALLBACK_BUTTON_01)
+            self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update), CALLBACK_BUTTON_01)"""

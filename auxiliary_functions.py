@@ -50,6 +50,7 @@ def save_history(update: Update):
     with open(f"user_history/{update.message.chat.id}.json",
               mode="w", encoding="utf-8") as handle:  # opening file named user ID
         json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
+    return f"{update.message.chat.id}.json"
 
 
 def handle_image(func):
