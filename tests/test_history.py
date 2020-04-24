@@ -29,10 +29,12 @@ class TestWriteHistory(unittest.TestCase):
             with open("user_history/2.json", "r") as test_handle:
                 self.assertEqual(test_handle.read(), '[]')
 
+    @patch("inline_handle.json.dump", mock.MagicMock())
     def test_correct_name(self):
-        with patch('telegram.Update') as mock_update:
-            os.chdir('..')
-            mock_update.message.chat.id = 3
-            auxiliary_functions.save_history(mock_update)
-            self.assertTrue(os.path.exists("user_history/3.json"))
-            os.remove("user_history/3.json")
+        mock_open_handler = mock.mock_open()
+        with patch('builtins.open', mock_open_handler):
+            with patch('telegram.Update') as mock_update:
+                mock_update.message.chat.id = 3
+                file_name = auxiliary_functions.save_history(mock_update)
+                mock_open_handler.assert_called_with(f"user_history/3.json", mode="w", encoding="utf-8")
+                self.assertEqual(file_name, "3.json")

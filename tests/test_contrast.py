@@ -1,4 +1,5 @@
 import unittest
+import initial_user_images, result_user_images
 import telegram
 from unittest import mock
 from unittest.mock import patch
@@ -19,9 +20,8 @@ def mock_decorator(func):
 class TestContrast(unittest.TestCase):
 
     def test_change_contrast(self):
-        os.chdir('..')
-        get_contrast_img(5.0, "initial_user_images/initial.jpg", "result_user_images/res.jpg")
-        self.assertNotEqual(Image.open("initial_user_images/initial.jpg"), Image.open("result_user_images/res.jpg"))
+        get_contrast_img(5.0, "TEST_initial.jpg", "TEST_res.jpg")
+        self.assertNotEqual(Image.open("TEST_initial.jpg"), Image.open("TEST_res.jpg"))
 
     def test_no_image(self):
         with patch('telegram.Update') as mock_update:
