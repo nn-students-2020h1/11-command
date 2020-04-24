@@ -20,6 +20,7 @@ class TestContrast(unittest.TestCase):
 
     def test_change_contrast(self):
         os.chdir('..')
+        print(os.getcwd())
         get_contrast_img(5.0, "initial_user_images/initial.jpg", "result_user_images/res.jpg")
         self.assertNotEqual(Image.open("initial_user_images/initial.jpg"), Image.open("result_user_images/res.jpg"))
 
