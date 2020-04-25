@@ -35,7 +35,7 @@ CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
 
 bot = Bot(
     token=TOKEN,
-#    base_url=PROXY,  # delete it if connection via VPN
+    base_url=PROXY,  # delete it if connection via VPN
 )
 
 
@@ -158,7 +158,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
         return file, add_data
 
     @staticmethod
-    def handle_keyboard_callback(update: Update):  # Gets callback_data from the pushed button
+    def handle_keyboard_callback(update: Update, context: None):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
         data = query.data  # callback_data of pushed button
         chat_id = update.effective_message.chat_id  # chat id for sending messages
