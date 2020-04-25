@@ -186,10 +186,21 @@ def command_get_stat_in_region(update: Update, context: CallbackContext):
         bot.send_photo(chat_id=update.effective_message.chat_id,
                        photo=open(covid_request.get_path_to_plot_file(), mode='rb'))
     else:
-        regions = ''
-        for i in covid_request.get_list_of_regions():
-            regions += i + '\n'
-        update.message.reply_text(regions)
+        one_vector = covid_request.transform_into_np_vector(user_request)
+        two_vector = covid_request.get_result_alphabet()
+        s = covid_request.get_cosine(one_vector, two_vector)
+        s = sorted(s, key=lambda x: x[1])
+        output = ''
+        epsilon = 0.350
+        for i in s[:2]:
+            if i[1] <= epsilon:
+                output += str(covid_request.get_specific_region_by_index(i[0])) + '\n'
+
+        if output == '':
+            for i in covid_request.get_list_of_regions():
+                output += str(i) + '\n'
+#
+        update.message.reply_text(f"Maybe: \n{str(output)}")
 
 
 def command_handle_contrast(update: Update):
