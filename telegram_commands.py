@@ -7,7 +7,7 @@ from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, Re
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
 from setup import TOKEN, PROXY
-from auxiliary_functions import handle_command, load_history, handle_image
+from auxiliary_functions import handle_command, handle_image, get_list_actions
 from image_handler import ImageHandler
 from countryinfo import CountryInfo
 from googletrans import Translator
@@ -18,7 +18,7 @@ from covid_stat import CovidRegionStat, CovidWorldStat
 
 bot = Bot(
     token=TOKEN,
-#    base_url=PROXY,  # delete it if connection via VPN
+    base_url=PROXY,  # delete it if connection via VPN
 )
 
 
@@ -26,7 +26,8 @@ bot = Bot(
 def command_start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     try:
-        load_history(update)  # if file exists, load history (update for getting user ID)
+        #  load_history(update)  # if file exists, load history (update for getting user ID)
+        pass
     except FileNotFoundError:
         open(f"user_history/{update.message.chat.id}.json", "w+")  # if file doesn't exist, create it for a new user
     update.message.reply_text(f'Hi, {update.effective_user.first_name}!')
@@ -46,7 +47,8 @@ def command_chat_help(update: Update, context: CallbackContext):
                               "<b>/corona_stat</b> to see 5 top provinces by new coronavirus cases\n" +
                               "<b>/news</b> to see fresh news about COVID-19\n" +
                               "<b>/infected</b> to get the probability of you getting COVID-19\n" +
-                              "<b>/recommendation</b> to get the recommendation about COVID-19\n",
+                              "<b>/recommendation</b> to get the recommendation about COVID-19\n" +
+                              "<b>/stat + your region</b> to get the covid_19 plot your region\n",
                               parse_mode=ParseMode.HTML
                               )
 
@@ -77,14 +79,12 @@ def get_quote(url: str):
 def command_history(update: Update, context: CallbackContext):
     """Display 5 latest actions when the command /history is issued."""
     update.message.reply_text("Last 5 actions:")
-    with open(f"user_history/{update.message.chat.id}.json", "r") as handle:
-        data = json.load(handle)
-        output = ""
-        for action in data:
-            for key, value in action.items():
-                output += f"{key}: {value}\n"
-            output += "\n"
-        update.message.reply_text(output)
+    actions = get_list_actions(str(update.message.chat_id))
+    output = ''
+    for action in actions[:-6:-1]:
+        output += str(f"<b>function:</b> {action[1]}, <b>text</b>: {action[2]}, <b>time</b>: {action[3]}\n")
+
+    update.message.reply_text(output, parse_mode=ParseMode.HTML)
 
 
 @handle_command

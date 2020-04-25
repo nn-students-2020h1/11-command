@@ -3,7 +3,7 @@ import time
 import os
 from telegram import Update, ChatAction, Bot
 from setup import TOKEN, PROXY
-
+import pymongo
 
 bot = Bot(
     token=TOKEN,
@@ -11,45 +11,52 @@ bot = Bot(
 )
 
 
-USERS_ACTION = []
-ACTION_COUNT = 0
+# USERS_ACTION = []
+# ACTION_COUNT = 0
+
+client = pymongo.MongoClient()
+db_user_actions = client['user_actions']
 
 
 def handle_command(func):
     def inner(*args, **kwargs):
-        global ACTION_COUNT
         update = args[0]
         if update:
-            if USERS_ACTION.__len__() > 4:
-                USERS_ACTION.pop(0)
-            USERS_ACTION.append({
+            user_action = {
                 'user_name': update.effective_user.first_name,
                 'function': func.__name__,
                 'text': update.message.text,
                 'time': time.strftime("%H:%M:%S", time.localtime())
-            })
-            save_history(update=update)
+            }
+            id_user = str(update.message.chat_id)
+            db_user_actions[id_user].insert_one(user_action)
         return func(*args, **kwargs)
     return inner
 
 
-def load_history(update: Update):
-    """Upload user's history"""
-    global USERS_ACTION
-    try:
-        if os.stat(f"user_history/{update.message.chat.id}.json").st_size == 0:
-            return None
-    except FileNotFoundError:
-        return None
-    with open(f"{update.message.chat.id}.json", mode="r", encoding="utf-8") as handle:  # opening file named user ID
-        USERS_ACTION = json.load(handle)  # getting the user actions from file
+def get_list_actions(chat_id: str) -> list:
+    actions = []
+    for action in db_user_actions[chat_id].find():
+        actions.append([action['user_name'], action['function'], action['text'], action['time']])
+    return actions
 
-
-def save_history(update: Update):
-    """Save user's history"""
-    with open(f"user_history/{update.message.chat.id}.json",
-              mode="w", encoding="utf-8") as handle:  # opening file named user ID
-        json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
+# def load_history(update: Update):
+#     """Upload user's history"""
+#     global USERS_ACTION
+#     try:
+#         if os.stat(f"user_history/{update.message.chat.id}.json").st_size == 0:
+#             return None
+#     except FileNotFoundError:
+#         return None
+#     with open(f"{update.message.chat.id}.json", mode="r", encoding="utf-8") as handle:  # opening file named user ID
+#         USERS_ACTION = json.load(handle)  # getting the user actions from file
+#
+#
+# def save_history(update: Update):
+#     """Save user's history"""
+#     with open(f"user_history/{update.message.chat.id}.json",
+#               mode="w", encoding="utf-8") as handle:  # opening file named user ID
+#         json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
 
 
 def handle_image(func):
