@@ -11,3 +11,4 @@ webdriver-manager
 googletrans
 matplotlib
 countryinfo
+pymongo
