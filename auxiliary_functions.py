@@ -1,9 +1,8 @@
-import json
 import time
-import os
-from telegram import Update, ChatAction, Bot
+from telegram import ChatAction, Bot
 from setup import TOKEN, PROXY
-
+import pymongo
+import pandas
 
 bot = Bot(
     token=TOKEN,
@@ -11,46 +10,66 @@ bot = Bot(
 )
 
 
-USERS_ACTION = []
-ACTION_COUNT = 0
+# USERS_ACTION = []
+# ACTION_COUNT = 0
+
+client = pymongo.MongoClient()
+
+db_user_actions = client['user_actions']
+db_covid_csv = client['covid_csv']
 
 
 def handle_command(func):
     def inner(*args, **kwargs):
-        global ACTION_COUNT
         update = args[0]
         if update:
-            if USERS_ACTION.__len__() > 4:
-                USERS_ACTION.pop(0)
-            USERS_ACTION.append({
+            user_action = {
                 'user_name': update.effective_user.first_name,
                 'function': func.__name__,
                 'text': update.message.text,
                 'time': time.strftime("%H:%M:%S", time.localtime())
-            })
-            save_history(update=update)
+            }
+            id_user = str(update.message.chat_id)
+            db_user_actions[id_user].insert_one(user_action)
         return func(*args, **kwargs)
     return inner
 
 
-def load_history(update: Update):
-    """Upload user's history"""
-    global USERS_ACTION
-    try:
-        if os.stat(f"user_history/{update.message.chat.id}.json").st_size == 0:
-            return None
-    except FileNotFoundError:
-        return None
-    with open(f"{update.message.chat.id}.json", mode="r", encoding="utf-8") as handle:  # opening file named user ID
-        USERS_ACTION = json.load(handle)  # getting the user actions from file
+def get_list_actions(chat_id: str) -> list:
+    actions = []
+    for action in db_user_actions[chat_id].find():
+        actions.append([action['user_name'], action['function'], action['text'], action['time']])
+    return actions
 
 
-def save_history(update: Update):
-    """Save user's history"""
-    with open(f"user_history/{update.message.chat.id}.json",
-              mode="w", encoding="utf-8") as handle:  # opening file named user ID
-        json.dump(USERS_ACTION, handle, ensure_ascii=False, indent=2)  # uploading actions to the file
-    return f"{update.message.chat.id}.json"
+def check_exist_dates(date: str):
+    if db_covid_csv[date].find_one() is None:
+        return False
+    return True
+
+
+def get_csv_from_db(date: str):
+    csv_content = db_covid_csv[date].find_one()
+    del csv_content['_id']
+    return csv_content
+
+
+def add_date_to_db(date):
+    s = pandas.read_csv("https://raw.githubusercontent.com/"
+                        "CSSEGISandData/COVID-19/master/csse_covid_19_data/"
+                        f"csse_covid_19_daily_reports/{date}.csv")
+    csv_dict = s.to_dict()
+    s = {}
+
+    for keys, values in csv_dict.items():
+        s[keys] = 0
+        temp = {}
+        for key, value in values.items():
+            temp_key = str(key)
+            temp[temp_key] = value
+        s[keys] = temp
+
+    db_covid_csv[date].insert_one(s)
 
 
 def handle_image(func):
@@ -66,5 +85,3 @@ def handle_image(func):
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=open("result_user_images/res.jpg", mode='rb'))
     return inner
-
-

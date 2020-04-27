@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import folium
 import matplotlib.pyplot as plt
+from auxiliary_functions import check_exist_dates, get_csv_from_db, add_date_to_db
+from datetime import datetime, timedelta
 
 """This class contains two class. You can look at world covid stat or region covid stat"""
 
@@ -102,11 +104,18 @@ class CovidRegionStat:
 class CovidWorldStat:
 
     def __init__(self):
-        self.link_yesterday = self.parse_html_page(self.make_corona_stat_request(), 3)
-        self.link_today = self.parse_html_page(self.make_corona_stat_request(), 2)
 
-        self.today_df = self.get_data_frame(self.link_today)
-        self.yesterday_df = self.get_data_frame(self.link_yesterday)
+        self.today_date, self.yesterday_date = CovidWorldStat.set_date(days_ago=1)
+
+        self.today_df = self.get_data_frame(self.today_date)
+        self.yesterday_df = self.get_data_frame(self.yesterday_date)
+
+    @staticmethod
+    def set_date(days_ago=0):
+        date_format = '%m-%d-%Y'
+        today = datetime.now() - timedelta(days=days_ago)
+        yesterday = today - timedelta(days=days_ago - 1)
+        return today.strftime(date_format), yesterday.strftime(date_format)
 
     def get_today_df(self):
         return self.today_df
@@ -141,22 +150,12 @@ class CovidWorldStat:
         return top_covid_places
 
     @staticmethod
-    def parse_html_page(response, idx):
-        soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
+    def get_data_frame(date):
 
-        return soup.find_all('tr', {'class': 'js-navigation-item'})[-idx]  # Get last csv
-
-    @staticmethod
-    def make_corona_stat_request():
-        return requests.get('https://github.com/CSSEGISandData/COVID-19/tree/master/'
-                            'csse_covid_19_data/csse_covid_19_daily_reports')
-
-    @staticmethod
-    def get_data_frame(last_csv_url):
-        response = requests.get("https://github.com/" + last_csv_url.find('a').get('href'))  # Open github page with csv
-        csv_html = BeautifulSoup(response.content, 'lxml')
-        csv_url = (csv_html.find('a', {'class': 'btn btn-sm BtnGroup-item'})).get('href')
-        return pd.read_csv("https://github.com/" + csv_url).dropna()  # Open our csv file with pandas
+        if not check_exist_dates(date):
+            add_date_to_db(date)
+        csv_content = get_csv_from_db(date)
+        return pd.DataFrame(csv_content).dropna()
 
     @staticmethod
     def get_covid_map(data_frame):

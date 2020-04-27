@@ -3,38 +3,48 @@ import telegram
 from unittest import mock
 from unittest.mock import patch
 import auxiliary_functions
+import pymongo
+import mongomock
 import user_history
 import os
 
 
+def get_action():
+    return {
+        'user_name': 'Test Name',
+        'function': 'Test Get Actions',
+        'text': 'Action got successfully',
+        'time': '14:35:44'
+    }
+
+
 class TestLoadHistory(unittest.TestCase):
-    def test_no_user_history(self):
-        with patch('telegram.Update') as mock_update:
-            mock_update.message.chat.id = 0
-        self.assertEqual(None, auxiliary_functions.load_history(mock_update))
 
-    def test_load_empty_history(self):
-        with patch('telegram.Update') as mock_update:
-            mock_update.message.chat.id = 1
-        self.assertEqual(None, auxiliary_functions.load_history(mock_update))
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_get_actions(self):
+        with patch("auxiliary_functions.db_user_actions",
+                   new=pymongo.MongoClient('testserver.com')['user_actions']) as mock_db:
+            mock_db['0'].insert_one(get_action())
+            self.assertEqual(auxiliary_functions.get_list_actions('0'),
+                             [['Test Name', 'Test Get Actions', 'Action got successfully', '14:35:44']])
+
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_get_empty_history(self):
+        with patch("auxiliary_functions.db_user_actions",
+                   new=pymongo.MongoClient('testserver.com')['user_actions']) as mock_db:
+            self.assertEqual(auxiliary_functions.get_list_actions('0'), [])
 
 
-class TestWriteHistory(unittest.TestCase):
-    def test_no_user_history(self):
-        mock_open_handler = mock.mock_open(read_data='[]')
-        with patch('telegram.Update') as mock_update:
-            mock_update.message.chat.id = 2
-        with patch('builtins.open', mock_open_handler, create=True):
-            auxiliary_functions.save_history(mock_update)
-            with open("user_history/2.json", "r") as test_handle:
-                self.assertEqual(test_handle.read(), '[]')
+class TestCSV(unittest.TestCase):
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_data_exists(self):
+        with patch("auxiliary_functions.db_covid_csv",
+                   new=pymongo.MongoClient('testserver.com')['covid_csv']) as mock_db:
+            mock_db['01.01.01'].insert_one({"test": "test"})
+            self.assertTrue(auxiliary_functions.check_exist_dates('01.01.01'))
 
-    @patch("inline_handle.json.dump", mock.MagicMock())
-    def test_correct_name(self):
-        mock_open_handler = mock.mock_open()
-        with patch('builtins.open', mock_open_handler):
-            with patch('telegram.Update') as mock_update:
-                mock_update.message.chat.id = 3
-                file_name = auxiliary_functions.save_history(mock_update)
-                mock_open_handler.assert_called_with(f"user_history/3.json", mode="w", encoding="utf-8")
-                self.assertEqual(file_name, "3.json")
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_no_data(self):
+        with patch("auxiliary_functions.db_covid_csv",
+                   new=pymongo.MongoClient('testserver.com')['covid_csv']) as mock_db:
+            self.assertFalse(auxiliary_functions.check_exist_dates('01.01.01'))
