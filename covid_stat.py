@@ -6,6 +6,9 @@ import folium
 import matplotlib.pyplot as plt
 from auxiliary_functions import check_exist_dates, get_csv_from_db, add_date_to_db
 from datetime import datetime, timedelta
+import numpy as np
+from scipy.spatial.distance import cosine
+
 
 """This class contains two class. You can look at world covid stat or region covid stat"""
 
@@ -17,12 +20,41 @@ class CovidRegionStat:
         self._name_data_frame = ''
         self._path_csv_file = ''
         self._path_plot_file = ''
+        self._matrix = []
+        self._russian_alphabet = {chr(symbol): key for key, symbol in zip(range(33), range(ord('а'), ord('а') + 32))}
+        self._result_alphabet = np.zeros((len(self._all_regions), len(self._russian_alphabet)))
+
+    def transform_into_np_vector(self, region):
+        np_vector = np.zeros(len(self._russian_alphabet))
+        for symbol in str(region).lower():
+            if symbol.isalpha():
+                key = self._russian_alphabet[symbol]
+                np_vector[key] += 1
+        return np_vector
+
+    def get_result_alphabet(self):
+        for region, i in zip(self.get_list_of_regions(), range(len(self.get_list_of_regions()))):
+            vector = self.transform_into_np_vector(region)
+            self._result_alphabet[i] = vector
+        return self._result_alphabet
+
+    @staticmethod
+    def get_cosine(one_vector, two_vector):
+        res = []
+        for i in range(0, len(two_vector)):
+            res.append((i, (cosine(one_vector, two_vector[i]))))
+        return res
 
     def get_path_to_plot_file(self):
         return self._path_plot_file
 
     def get_list_of_regions(self) -> list:
         return list(self._all_regions.keys())
+
+    def get_specific_region_by_index(self, index):
+        for region, idx in zip(self._all_regions, range(len(self._all_regions))):
+            if idx == index:
+                return region
 
     def get_specific_region_href(self, region_name) -> str:
         if region_name in self._all_regions:

@@ -11,4 +11,6 @@ webdriver-manager
 googletrans
 matplotlib
 countryinfo
+mongomock
 pymongo
+scipy
