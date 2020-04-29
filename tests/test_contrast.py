@@ -1,13 +1,7 @@
 import unittest
-import initial_user_images, result_user_images
-import telegram
-from unittest import mock
 from unittest.mock import patch
 from image_handler import get_contrast_img
 from telegram_commands import command_handle_contrast
-import auxiliary_functions
-from PIL import Image
-import os
 
 
 def mock_decorator(func):

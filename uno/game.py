@@ -1,7 +1,6 @@
 from deck import Deck
 from player import Player
-from card import COLORS, VALUES, SPECIAL_CARDS
-import card
+from card import COLORS, SPECIAL_CARDS
 import random
 
 DRAW_TWO = 'draw_2'

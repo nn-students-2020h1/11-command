@@ -28,7 +28,7 @@ class TestLoadHistory(unittest.TestCase):
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_get_empty_history(self):
         with patch("auxiliary_functions.db_user_actions",
-                   new=pymongo.MongoClient('testserver.com')['user_actions']) as mock_db:
+                   new=pymongo.MongoClient('testserver.com')['user_actions']):
             self.assertEqual(auxiliary_functions.get_list_actions('0'), [])
 
 
@@ -43,7 +43,7 @@ class TestCSV(unittest.TestCase):
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_no_data(self):
         with patch("auxiliary_functions.db_covid_csv",
-                   new=pymongo.MongoClient('testserver.com')['covid_csv']) as mock_db:
+                   new=pymongo.MongoClient('testserver.com')['covid_csv']):
             self.assertFalse(auxiliary_functions.check_exist_dates('01.01.01'))
 
     @mongomock.patch(servers=(('testserver.com', 27017),))
@@ -56,7 +56,7 @@ class TestCSV(unittest.TestCase):
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_add_csv_to_db(self):
         with patch("auxiliary_functions.db_covid_csv",
-                   new=pymongo.MongoClient('testserver.com')['covid_csv']) as mock_db:
+                   new=pymongo.MongoClient('testserver.com')['covid_csv']):
             with patch('auxiliary_functions.pandas.read_csv') as mock_read_csv:
                 test_data = [['45001', 'Abbeville', 'South Carolina', 'US']]
                 test_dataframe = pd.DataFrame(test_data, columns=['FIPS', 'Admin2', 'Province_State', 'Country_Region'])

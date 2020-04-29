@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 import numpy as np
 from scipy.spatial.distance import cosine
 
-
 """This class contains two class. You can look at world covid stat or region covid stat"""
 
 

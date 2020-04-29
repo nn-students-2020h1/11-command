@@ -1,15 +1,10 @@
 import unittest
-import telegram
+
 from unittest import mock
 from unittest.mock import patch
-import auxiliary_functions
-import user_history
-import os
-import inline_handle
-from inline_handle import InlineKeyboardFactory, InlineCallback, bot
-from inline_handle import CALLBACK_BUTTON_01
+from inline_handle import InlineKeyboardFactory, InlineCallback
 from telegram import InlineKeyboardMarkup
-import image_handler
+
 
 def yet_another_func(*args):
     return ''

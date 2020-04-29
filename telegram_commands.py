@@ -192,7 +192,7 @@ def command_get_stat_in_region(update: Update, context: CallbackContext):
         update.message.reply_text(regions)
 
 
-def command_handle_contrast(update: Update):
+def command_handle_contrast(update: Update, context = None):
     """This image is processing by the contrast filter"""
     try:
         bot.send_photo(chat_id=update.effective_message.chat_id,
@@ -227,7 +227,7 @@ def calc_probability(chat_id):
         personal = json.load(handle)
 
     geolocator = Nominatim(user_agent="tg_bot")
-    location = geolocator.reverse(personal["location"], language='ru')
+    location = geolocator.reverse(personal["location"], language='en')
     country = location.address.split(', ')[-1]
 
     chance = 1.0
@@ -255,7 +255,7 @@ def calc_probability(chat_id):
     driver.get('https://virus-zone.ru/coronavirus-v-mire/')
     # runs the page with covid-19 data for World
 
-    table = driver.find_element_by_xpath('/html/body/div[3]/div[6]/div/table')
+    table = driver.find_element_by_xpath('/html/body/div[3]/div[8]/div/table')
     # find the JS-generated table with statistics on covid-19 divided by regions
 
     table_html = table.get_attribute('innerHTML')
@@ -280,7 +280,8 @@ def calc_probability(chat_id):
             output_row.append(column.text.strip())  # add cell to the row without whitespaces
         output_rows.append(output_row)  # add formatted row and go to the next one
 
-    with open('corona_information/covid_data.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
+    with open('corona_information/covid_data.csv', 'w', newline='') as csvfile:
+        # open .csv file for storing our covid-19 RU data
         writer = csv.writer(csvfile)  # csv writer for this file
         writer.writerows(headings)  # firstly, add headings
         writer.writerows(output_rows)  # then add all rows from table

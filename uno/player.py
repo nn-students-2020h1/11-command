@@ -1,5 +1,3 @@
-import card
-
 from errors import EmptyDeckError, WrongCardError
 
 
