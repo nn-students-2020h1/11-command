@@ -14,7 +14,7 @@ class GameManager:
             print(game.current_player.next.is_human)
             print(f"Computer has {computer.cards.__len__()} cards")
             print(f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Your deck:")
-            user.view_deck()
+            print(user.view_deck())
             msg = input("Type index or X (draw 1): ")
             if msg == "X":
                 user.draw()

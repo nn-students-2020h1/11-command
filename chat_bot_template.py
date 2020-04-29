@@ -45,6 +45,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('infected', tg.command_get_probability))
     updater.dispatcher.add_handler(CommandHandler('recommendation', tg.command_recommendation))
     updater.dispatcher.add_handler(CommandHandler('stat', tg.command_get_stat_in_region))
+    updater.dispatcher.add_handler(CommandHandler('uno', tg.command_uno))
 
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, tg.command_get_image))
 

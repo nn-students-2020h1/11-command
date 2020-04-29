@@ -26,6 +26,9 @@ class TestKeyboardFactory(unittest.TestCase):
     def test_bloodtype_keyboard(self):
         self.assertIsInstance(InlineKeyboardFactory.get_inline_bloodtype(), InlineKeyboardMarkup)
 
+    def test_uno_choose_player_keyboard(self):
+        self.assertIsInstance(InlineKeyboardFactory.get_inline_uno_choose_player(), InlineKeyboardMarkup)
+
 
 class TestInlineCallback(unittest.TestCase):
 

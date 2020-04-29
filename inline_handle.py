@@ -8,6 +8,8 @@ from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, Re
 from setup import TOKEN
 from covid_news import CovidNews
 from lxml import html
+from uno.player import Player
+from uno.game import Game
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -31,6 +33,9 @@ CALLBACK_BUTTON_BLOOD_I = "callback_blood_I"
 CALLBACK_BUTTON_BLOOD_II = "callback_blood_II"
 CALLBACK_BUTTON_BLOOD_III = "callback_blood_III"
 CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
+
+CALLBACK_BUTTON_UNO_BOT = "callback_uno_bot"
+CALLBACK_BUTTON_UNO_DRAW_ONE = "callback_uno_draw_one"
 
 bot = Bot(
     token=TOKEN,
@@ -138,6 +143,15 @@ class InlineKeyboardFactory:  # provides all inline keyboards
             ],
             [
                 InlineKeyboardButton("I don't know", callback_data=CALLBACK_BUTTON_BLOOD_I)
+            ]
+        ]
+        return InlineKeyboardMarkup(keyboard)
+
+    @staticmethod
+    def get_inline_uno_choose_player():
+        keyboard = [
+            [
+                InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT)
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -296,3 +310,27 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                              text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
             bot.send_message(chat_id=chat_id,
                              text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
+
+        elif data == CALLBACK_BUTTON_UNO_BOT:
+            game = Game()
+            tg.GAME = game
+            tg.CHAT_ID = chat_id
+            tg.uno_game_handler(update=update, chat_id=chat_id, players=[Player(chat_id=chat_id,
+                                                                                game=game, is_human=True, name='You'),
+                                                                         Player(chat_id=chat_id,
+                                                                                game=game, is_human=False,
+                                                                                name='Boss')], game=game)
+
+        elif data == CALLBACK_BUTTON_UNO_DRAW_ONE:
+            tg.GAME.current_player.draw()
+            tg.GAME.next_turn()
+
+        elif data.__len__() < 3:
+            if tg.GAME.current_player.cards[int(data)].value == "draw_2" or tg.GAME.current_player.cards[int(data)].value == "skip":
+                tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])
+                '''if tg.GAME.current_player.is_human:
+                    tg.uno_play_msg(chat_id=chat_id, game=tg.GAME)
+                else:
+                    tg.GAME.current_player.play()'''
+            else:
+                tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])

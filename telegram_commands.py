@@ -15,11 +15,16 @@ from geopy.geocoders import Nominatim
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from covid_stat import CovidRegionStat, CovidWorldStat
+from uno.game import Game
+from uno.player import Player
 
 bot = Bot(
     token=TOKEN,
     base_url=PROXY,  # delete it if connection via VPN
 )
+
+GAME = None
+CHAT_ID = None
 
 
 @handle_command
@@ -300,3 +305,32 @@ def calc_probability(chat_id):  # noqa: C901  # TODO: will fix this later
                     chance *= (int(infected) * 10) / int(population)
 
     return format(chance, '.8f')
+
+
+@handle_command
+def command_uno(update: Update, context=None):
+    bot.send_message(chat_id=update.message.chat_id, text="Welcome to UNO-11! Who do you want to play with?",
+                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_uno_choose_player())
+
+
+def uno_game_handler(update: Update, chat_id: str, players: list, game: Game):
+    bot.send_message(chat_id=chat_id, text="Your opponent: Boss!")
+    for player in players:
+        game.add_player(player)
+    game.started = True
+    if game.current_player.is_human:
+        uno_play_msg(chat_id=chat_id, game=game)
+    else:
+        game.current_player.play()
+        bot.send_message(chat_id=chat_id,
+                         text=f"{game.current_player.name} has {game.current_player.cards.__len__()} cards")
+
+
+def uno_play_msg(chat_id: str, game: Game):
+    players = game.players
+    bot.send_message(chat_id=chat_id, text=f"Your turn! Boss has {players[1].cards.__len__()} cards...")
+    bot.send_message(chat_id=chat_id,
+                     text=f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:")  # noqa: E501  # TODO: will fix this later
+    bot.send_message(chat_id=chat_id, text=players[0].view_deck())
+    bot.send_message(chat_id=chat_id, text="Choose card by index:",
+                     reply_markup=game.current_player.deck_choose_keyboard())
