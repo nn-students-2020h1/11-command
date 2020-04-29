@@ -1,8 +1,15 @@
-from deck import Deck
-from player import Player
-from card import COLORS, VALUES, SPECIAL_CARDS
-import card
+from uno.deck import Deck
+from uno.player import Player
+from uno.card import COLORS, SPECIAL_CARDS
 import random
+
+from telegram import Bot
+from setup import TOKEN, PROXY
+
+bot = Bot(
+    token=TOKEN,
+    base_url=PROXY,  # delete it if connection via VPN
+)
 
 DRAW_TWO = 'draw_2'
 DRAW_FOUR = 'draw_4'
@@ -39,11 +46,21 @@ class Game:
         if self.draw_counter != 0:
             self.current_player.next.draw()
         self.current_player = self.current_player.next
+        if not self.current_player.is_human:
+            self.current_player.play()
+        else:
+            from telegram_commands import uno_play_msg
+            uno_play_msg(chat_id=self.current_player.chat_id, game=self.current_player.game)
 
     def skip_next(self):
         if self.draw_counter != 0:
             self.current_player.next.draw()
         self.current_player = self.current_player.next.next
+        if not self.current_player.is_human:
+            self.current_player.play()
+        else:
+            from telegram_commands import uno_play_msg
+            uno_play_msg(chat_id=self.current_player.chat_id, game=self.current_player.game)
 
     def play_card(self, card):
         self.deck.beaten(self.last_card)
@@ -56,23 +73,26 @@ class Game:
         elif card.value == SKIP:
             self.skip_next()
             return None
-        elif card.special == CHOOSE_COLOR:
+        elif card.special == CHOOSE_COLOR:  # ADD INLINE COLOR KEYBOARD
             print("CHOOSING COLOR!")
+            bot.send_message(chat_id=self.current_player.chat_id, text="CHOOSING COLOR!")
             if not self.current_player.is_human:
                 self.choose_color(random.choice(COLORS))
             else:
                 color = input("Color: ")
                 self.choose_color(color)
             print(f"Chosen color {self.last_card.color}")
+            bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
             return None
         elif card.special == DRAW_FOUR:
             self.draw_counter += 4
             if not self.current_player.is_human:
                 self.choose_color(random.choice(COLORS))
             else:
-                color = input("Color: ")
+                color = input("Color: ")  # ADD INLINE COLOR KEYBOARD
                 self.choose_color(color)
             print(f"Chosen color {self.last_card.color}")
+            bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
             return None
         elif card.special not in SPECIAL_CARDS:
             self.next_turn()

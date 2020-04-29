@@ -7,7 +7,7 @@ from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, Re
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
 from setup import TOKEN, PROXY
-from auxiliary_functions import handle_command, load_history, handle_image
+from auxiliary_functions import handle_command, handle_image, get_list_actions
 from image_handler import ImageHandler
 from countryinfo import CountryInfo
 from googletrans import Translator
@@ -15,18 +15,24 @@ from geopy.geocoders import Nominatim
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from covid_stat import CovidRegionStat, CovidWorldStat
+from uno.game import Game
+from uno.player import Player
 
 bot = Bot(
     token=TOKEN,
-#    base_url=PROXY,  # delete it if connection via VPN
+    base_url=PROXY,  # delete it if connection via VPN
 )
+
+GAME = None
+CHAT_ID = None
 
 
 @handle_command
 def command_start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     try:
-        load_history(update)  # if file exists, load history (update for getting user ID)
+        #  load_history(update)  # if file exists, load history (update for getting user ID)
+        pass
     except FileNotFoundError:
         open(f"user_history/{update.message.chat.id}.json", "w+")  # if file doesn't exist, create it for a new user
     update.message.reply_text(f'Hi, {update.effective_user.first_name}!')
@@ -46,7 +52,8 @@ def command_chat_help(update: Update, context: CallbackContext):
                               "<b>/corona_stat</b> to see 5 top provinces by new coronavirus cases\n" +
                               "<b>/news</b> to see fresh news about COVID-19\n" +
                               "<b>/infected</b> to get the probability of you getting COVID-19\n" +
-                              "<b>/recommendation</b> to get the recommendation about COVID-19\n",
+                              "<b>/recommendation</b> to get the recommendation about COVID-19\n" +
+                              "<b>/stat + your region</b> to get the covid_19 plot your region\n",
                               parse_mode=ParseMode.HTML
                               )
 
@@ -77,14 +84,12 @@ def get_quote(url: str):
 def command_history(update: Update, context: CallbackContext):
     """Display 5 latest actions when the command /history is issued."""
     update.message.reply_text("Last 5 actions:")
-    with open(f"user_history/{update.message.chat.id}.json", "r") as handle:
-        data = json.load(handle)
-        output = ""
-        for action in data:
-            for key, value in action.items():
-                output += f"{key}: {value}\n"
-            output += "\n"
-        update.message.reply_text(output)
+    actions = get_list_actions(str(update.message.chat_id))
+    output = ''
+    for action in actions[:-6:-1]:
+        output += str(f"<b>function:</b> {action[1]}, <b>text</b>: {action[2]}, <b>time</b>: {action[3]}\n")
+
+    update.message.reply_text(output, parse_mode=ParseMode.HTML)
 
 
 @handle_command
@@ -192,7 +197,7 @@ def command_get_stat_in_region(update: Update, context: CallbackContext):
         update.message.reply_text(regions)
 
 
-def command_handle_contrast(update: Update):
+def command_handle_contrast(update: Update, context=None):
     """This image is processing by the contrast filter"""
     try:
         bot.send_photo(chat_id=update.effective_message.chat_id,
@@ -221,13 +226,13 @@ def get_location(update: Update, context: CallbackContext):
                      reply_markup=inline_handle.InlineKeyboardFactory.get_inline_stayhome())
 
 
-def calc_probability(chat_id):
+def calc_probability(chat_id):  # noqa: C901  # TODO: will fix this later
     personal = []
     with open(f"personal_{chat_id}.json", 'r') as handle:
         personal = json.load(handle)
 
     geolocator = Nominatim(user_agent="tg_bot")
-    location = geolocator.reverse(personal["location"], language='ru')
+    location = geolocator.reverse(personal["location"], language='en')
     country = location.address.split(', ')[-1]
 
     chance = 1.0
@@ -255,7 +260,7 @@ def calc_probability(chat_id):
     driver.get('https://virus-zone.ru/coronavirus-v-mire/')
     # runs the page with covid-19 data for World
 
-    table = driver.find_element_by_xpath('/html/body/div[3]/div[6]/div/table')
+    table = driver.find_element_by_xpath('/html/body/div[3]/div[8]/div/table')
     # find the JS-generated table with statistics on covid-19 divided by regions
 
     table_html = table.get_attribute('innerHTML')
@@ -280,7 +285,8 @@ def calc_probability(chat_id):
             output_row.append(column.text.strip())  # add cell to the row without whitespaces
         output_rows.append(output_row)  # add formatted row and go to the next one
 
-    with open('corona_information/covid_data.csv', 'w', newline='') as csvfile:  # open .csv file for storing our covid-19 RU data
+    with open('corona_information/covid_data.csv', 'w', newline='') as csvfile:
+        # open .csv file for storing our covid-19 RU data
         writer = csv.writer(csvfile)  # csv writer for this file
         writer.writerows(headings)  # firstly, add headings
         writer.writerows(output_rows)  # then add all rows from table
@@ -299,3 +305,32 @@ def calc_probability(chat_id):
                     chance *= (int(infected) * 10) / int(population)
 
     return format(chance, '.8f')
+
+
+@handle_command
+def command_uno(update: Update, context=None):
+    bot.send_message(chat_id=update.message.chat_id, text="Welcome to UNO-11! Who do you want to play with?",
+                     reply_markup=inline_handle.InlineKeyboardFactory.get_inline_uno_choose_player())
+
+
+def uno_game_handler(update: Update, chat_id: str, players: list, game: Game):
+    bot.send_message(chat_id=chat_id, text="Your opponent: Boss!")
+    for player in players:
+        game.add_player(player)
+    game.started = True
+    if game.current_player.is_human:
+        uno_play_msg(chat_id=chat_id, game=game)
+    else:
+        game.current_player.play()
+        bot.send_message(chat_id=chat_id,
+                         text=f"{game.current_player.name} has {game.current_player.cards.__len__()} cards")
+
+
+def uno_play_msg(chat_id: str, game: Game):
+    players = game.players
+    bot.send_message(chat_id=chat_id, text=f"Your turn! Boss has {players[1].cards.__len__()} cards...")
+    bot.send_message(chat_id=chat_id,
+                     text=f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:")  # noqa: E501  # TODO: will fix this later
+    bot.send_message(chat_id=chat_id, text=players[0].view_deck())
+    bot.send_message(chat_id=chat_id, text="Choose card by index:",
+                     reply_markup=game.current_player.deck_choose_keyboard())

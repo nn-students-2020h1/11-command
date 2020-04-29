@@ -5,10 +5,11 @@ import json
 import telegram_commands as tg
 
 from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
-from telegram.ext import CallbackContext
-from setup import TOKEN, PROXY
+from setup import TOKEN
 from covid_news import CovidNews
 from lxml import html
+from uno.player import Player
+from uno.game import Game
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -33,11 +34,12 @@ CALLBACK_BUTTON_BLOOD_II = "callback_blood_II"
 CALLBACK_BUTTON_BLOOD_III = "callback_blood_III"
 CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
 
+CALLBACK_BUTTON_UNO_BOT = "callback_uno_bot"
+CALLBACK_BUTTON_UNO_DRAW_ONE = "callback_uno_draw_one"
+
 bot = Bot(
     token=TOKEN,
-#    base_url=PROXY,  # delete it if connection via VPN
 )
-
 
 Covid = CovidNews()
 
@@ -145,6 +147,15 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         ]
         return InlineKeyboardMarkup(keyboard)
 
+    @staticmethod
+    def get_inline_uno_choose_player():
+        keyboard = [
+            [
+                InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT)
+            ]
+        ]
+        return InlineKeyboardMarkup(keyboard)
+
 
 class InlineCallback:  # Processes the events on inline keyboards' buttons
 
@@ -157,8 +168,8 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             json.dump(data, handle, ensure_ascii=False, indent=2)
         return file, add_data
 
-    @staticmethod
-    def handle_keyboard_callback(update: Update):  # Gets callback_data from the pushed button
+    @staticmethod  # noqa: C901  # TODO: it works, so I don't wanna to ruin it
+    def handle_keyboard_callback(update: Update, context=None):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
         data = query.data  # callback_data of pushed button
         chat_id = update.effective_message.chat_id  # chat id for sending messages
@@ -198,7 +209,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
 
         elif data == CALLBACK_BUTTON_FIN:
-            img_h.get_contrast_img(1.0, 'initial_user_images/initial.jpg',
+            img_h.get_contrast_img(0.0, 'initial_user_images/initial.jpg',
                                    'result_user_images/res.jpg')  # get final result after editing
             final_message = bot.send_photo(chat_id=chat_id,
                                            photo=open("result_user_images/res.jpg", mode='rb'))
@@ -299,3 +310,27 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                              text="Thanks! Now I can calculate the coronavirus pick up probability for you.")
             bot.send_message(chat_id=chat_id,
                              text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
+
+        elif data == CALLBACK_BUTTON_UNO_BOT:
+            game = Game()
+            tg.GAME = game
+            tg.CHAT_ID = chat_id
+            tg.uno_game_handler(update=update, chat_id=chat_id, players=[Player(chat_id=chat_id,
+                                                                                game=game, is_human=True, name='You'),
+                                                                         Player(chat_id=chat_id,
+                                                                                game=game, is_human=False,
+                                                                                name='Boss')], game=game)
+
+        elif data == CALLBACK_BUTTON_UNO_DRAW_ONE:
+            tg.GAME.current_player.draw()
+            tg.GAME.next_turn()
+
+        elif data.__len__() < 3:
+            if tg.GAME.current_player.cards[int(data)].value == "draw_2" or tg.GAME.current_player.cards[int(data)].value == "skip":
+                tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])
+                '''if tg.GAME.current_player.is_human:
+                    tg.uno_play_msg(chat_id=chat_id, game=tg.GAME)
+                else:
+                    tg.GAME.current_player.play()'''
+            else:
+                tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])

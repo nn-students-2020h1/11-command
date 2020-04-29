@@ -1,8 +1,8 @@
-import card
+import uno.card as card
 
-from card import Card
+from uno.card import Card
 from random import shuffle
-from errors import EmptyDeckError
+from uno.errors import EmptyDeckError
 
 
 class Deck:

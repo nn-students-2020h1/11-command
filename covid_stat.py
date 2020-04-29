@@ -4,6 +4,10 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import folium
 import matplotlib.pyplot as plt
+from auxiliary_functions import check_exist_dates, get_csv_from_db, add_date_to_db
+from datetime import datetime, timedelta
+import numpy as np
+from scipy.spatial.distance import cosine
 
 """This class contains two class. You can look at world covid stat or region covid stat"""
 
@@ -15,12 +19,41 @@ class CovidRegionStat:
         self._name_data_frame = ''
         self._path_csv_file = ''
         self._path_plot_file = ''
+        self._matrix = []
+        self._russian_alphabet = {chr(symbol): key for key, symbol in zip(range(33), range(ord('а'), ord('а') + 32))}
+        self._result_alphabet = np.zeros((len(self._all_regions), len(self._russian_alphabet)))
+
+    def transform_into_np_vector(self, region):
+        np_vector = np.zeros(len(self._russian_alphabet))
+        for symbol in str(region).lower():
+            if symbol.isalpha():
+                key = self._russian_alphabet[symbol]
+                np_vector[key] += 1
+        return np_vector
+
+    def get_result_alphabet(self):
+        for region, i in zip(self.get_list_of_regions(), range(len(self.get_list_of_regions()))):
+            vector = self.transform_into_np_vector(region)
+            self._result_alphabet[i] = vector
+        return self._result_alphabet
+
+    @staticmethod
+    def get_cosine(one_vector, two_vector):
+        res = []
+        for i in range(0, len(two_vector)):
+            res.append((i, (cosine(one_vector, two_vector[i]))))
+        return res
 
     def get_path_to_plot_file(self):
         return self._path_plot_file
 
     def get_list_of_regions(self) -> list:
         return list(self._all_regions.keys())
+
+    def get_specific_region_by_index(self, index):
+        for region, idx in zip(self._all_regions, range(len(self._all_regions))):
+            if idx == index:
+                return region
 
     def get_specific_region_href(self, region_name) -> str:
         if region_name in self._all_regions:
@@ -44,7 +77,7 @@ class CovidRegionStat:
                 name_region = region.get_text()
                 href_region = region['href']
                 regions[name_region] = 'https://coronavirusstat.ru' + href_region
-            except:
+            except:  # noqa: E722  # TODO: will fix this later
                 break
         return regions
 
@@ -102,11 +135,18 @@ class CovidRegionStat:
 class CovidWorldStat:
 
     def __init__(self):
-        self.link_yesterday = self.parse_html_page(self.make_corona_stat_request(), 3)
-        self.link_today = self.parse_html_page(self.make_corona_stat_request(), 2)
 
-        self.today_df = self.get_data_frame(self.link_today)
-        self.yesterday_df = self.get_data_frame(self.link_yesterday)
+        self.today_date, self.yesterday_date = CovidWorldStat.set_date(days_ago=1)
+
+        self.today_df = self.get_data_frame(self.today_date)
+        self.yesterday_df = self.get_data_frame(self.yesterday_date)
+
+    @staticmethod
+    def set_date(days_ago=0):
+        date_format = '%m-%d-%Y'
+        today = datetime.now() - timedelta(days=days_ago)
+        yesterday = today - timedelta(days=days_ago - 1)
+        return today.strftime(date_format), yesterday.strftime(date_format)
 
     def get_today_df(self):
         return self.today_df
@@ -141,22 +181,12 @@ class CovidWorldStat:
         return top_covid_places
 
     @staticmethod
-    def parse_html_page(response, idx):
-        soup = BeautifulSoup(response.content, 'lxml')  # Use library bs4
+    def get_data_frame(date):
 
-        return soup.find_all('tr', {'class': 'js-navigation-item'})[-idx]  # Get last csv
-
-    @staticmethod
-    def make_corona_stat_request():
-        return requests.get('https://github.com/CSSEGISandData/COVID-19/tree/master/'
-                            'csse_covid_19_data/csse_covid_19_daily_reports')
-
-    @staticmethod
-    def get_data_frame(last_csv_url):
-        response = requests.get("https://github.com/" + last_csv_url.find('a').get('href'))  # Open github page with csv
-        csv_html = BeautifulSoup(response.content, 'lxml')
-        csv_url = (csv_html.find('a', {'class': 'btn btn-sm BtnGroup-item'})).get('href')
-        return pd.read_csv("https://github.com/" + csv_url).dropna()  # Open our csv file with pandas
+        if not check_exist_dates(date):
+            add_date_to_db(date)
+        csv_content = get_csv_from_db(date)
+        return pd.DataFrame(csv_content).dropna()
 
     @staticmethod
     def get_covid_map(data_frame):
@@ -173,6 +203,6 @@ class CovidWorldStat:
                 folium.Marker(location=[data_frame['Lat'][i], data_frame['Long_'][i]],
                               popup=f"{data_frame['Province_State'][i]}:{data_frame['Confirmed'][i]}",
                               icon=folium.Icon(color=color, icon='info-sign')).add_to(maps)
-            except:
+            except:  # noqa: E722  # TODO: will fix this later
                 maps.save('corona_information/map.html')
         maps.save('corona_information/map.html')

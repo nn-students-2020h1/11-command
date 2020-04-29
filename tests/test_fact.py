@@ -1,5 +1,4 @@
 import unittest
-from unittest import mock
 from unittest.mock import patch
 import telegram_commands
 
@@ -14,7 +13,8 @@ class TestFact(unittest.TestCase):
     def test_ok_request(self):
         with patch('telegram_commands.requests.get') as mock_get:
             mock_get.return_value.ok = True
-            mock_get.return_value.json.return_value = {"all":[{"text":"test", "user":{"name":{"first":"test","last":"test"}}}]}
+            mock_get.return_value.json.return_value = {"all": [{"text": "test", "user": {"name": {"first": "test",
+                                                                                                  "last": "test"}}}]}
             fact = telegram_commands.get_quote("https://cat-fact.herokuapp.com/facts")
         self.assertEqual(fact, ["<i>test</i>", "<b>Author: test test</b>"])
 

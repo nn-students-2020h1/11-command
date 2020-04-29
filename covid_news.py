@@ -65,6 +65,3 @@ class CovidNews:
             content[title] = ['https://yandex.ru' + href, brief_news]  # Add into dict\
 
         return content  # Return dict of news
-
-
-

@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 bot = Bot(
     token=TOKEN,
-    #base_url=PROXY,  # delete it if connection via VPN
+    base_url=PROXY,  # delete it if connection via VPN
 )
+
 
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
@@ -44,9 +45,10 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('infected', tg.command_get_probability))
     updater.dispatcher.add_handler(CommandHandler('recommendation', tg.command_recommendation))
     updater.dispatcher.add_handler(CommandHandler('stat', tg.command_get_stat_in_region))
+    updater.dispatcher.add_handler(CommandHandler('uno', tg.command_uno))
 
     updater.dispatcher.add_handler(MessageHandler(Filters.photo, tg.command_get_image))
-    
+
     # location handler
     updater.dispatcher.add_handler(MessageHandler(Filters.location, tg.get_location))
 

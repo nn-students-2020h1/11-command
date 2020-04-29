@@ -34,14 +34,14 @@ class TestCovidRegionStat(unittest.TestCase):
     def test_get_specific_refion_href_is_str(self):
         with patch("covid_stat.CovidRegionStat.get_path_to_plot_file") as mock_href:
             mock_href.return_value = "google.com"
-            self.assertIsInstance(CovidRegionStat.get_specific_region_href(), str)
+            testStat = CovidRegionStat()
+            self.assertIsInstance(CovidRegionStat.get_specific_region_href(testStat, region_name="Москва"), str)
 
     @patch('covid_stat.CovidRegionStat.get_specific_region_href')
     def test_get_specific_refion_href(self, mock_href):
         mock_region_name = mock.Mock()
         mock_region_name.return_value = 0
         mock_href.return_value = mock_region_name
-        with self.assertRaises(Exception) as context:
+        mock_href.side_effect = Exception
+        with self.assertRaises(Exception):
             CovidRegionStat.get_specific_region_href(mock_region_name)
-        self.assertTrue("Don't exist a such region" in str(context.exception))
-
