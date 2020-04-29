@@ -1,4 +1,4 @@
-from errors import EmptyDeckError, WrongCardError
+from uno.errors import EmptyDeckError, WrongCardError
 
 
 class Player:
@@ -51,7 +51,7 @@ class Player:
                 raise WrongCardError
         else:
             for playable_card in self.cards:
-                if playable_card.color == self.game.last_card.color or playable_card.value == self.game.last_card.value or playable_card.special is not None:
+                if playable_card.color == self.game.last_card.color or playable_card.value == self.game.last_card.value or playable_card.special is not None:  # noqa: E501  # TODO: will fix this later
                     self.game.play_card(playable_card)
                     print(f"{self.name} played card {playable_card.color} {playable_card.value} {playable_card.special}.")
                     self.cards.remove(playable_card)

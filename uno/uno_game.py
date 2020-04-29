@@ -1,5 +1,5 @@
-from game import Game
-from player import Player
+from uno.game import Game
+from uno.player import Player
 
 
 class GameManager:

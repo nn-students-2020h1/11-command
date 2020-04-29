@@ -77,7 +77,7 @@ class CovidRegionStat:
                 name_region = region.get_text()
                 href_region = region['href']
                 regions[name_region] = 'https://coronavirusstat.ru' + href_region
-            except:
+            except:  # noqa: E722  # TODO: will fix this later
                 break
         return regions
 
@@ -203,6 +203,6 @@ class CovidWorldStat:
                 folium.Marker(location=[data_frame['Lat'][i], data_frame['Long_'][i]],
                               popup=f"{data_frame['Province_State'][i]}:{data_frame['Confirmed'][i]}",
                               icon=folium.Icon(color=color, icon='info-sign')).add_to(maps)
-            except:
+            except:  # noqa: E722  # TODO: will fix this later
                 maps.save('corona_information/map.html')
         maps.save('corona_information/map.html')

@@ -1,6 +1,6 @@
-from deck import Deck
-from player import Player
-from card import COLORS, SPECIAL_CARDS
+from uno.deck import Deck
+from uno.player import Player
+from uno.card import COLORS, SPECIAL_CARDS
 import random
 
 DRAW_TWO = 'draw_2'

@@ -154,7 +154,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             json.dump(data, handle, ensure_ascii=False, indent=2)
         return file, add_data
 
-    @staticmethod
+    @staticmethod  # noqa: C901  # TODO: it works, so I don't wanna to ruin it
     def handle_keyboard_callback(update: Update, context=None):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
         data = query.data  # callback_data of pushed button

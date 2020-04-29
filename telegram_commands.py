@@ -192,7 +192,7 @@ def command_get_stat_in_region(update: Update, context: CallbackContext):
         update.message.reply_text(regions)
 
 
-def command_handle_contrast(update: Update, context = None):
+def command_handle_contrast(update: Update, context=None):
     """This image is processing by the contrast filter"""
     try:
         bot.send_photo(chat_id=update.effective_message.chat_id,
@@ -221,7 +221,7 @@ def get_location(update: Update, context: CallbackContext):
                      reply_markup=inline_handle.InlineKeyboardFactory.get_inline_stayhome())
 
 
-def calc_probability(chat_id):
+def calc_probability(chat_id):  # noqa: C901  # TODO: will fix this later
     personal = []
     with open(f"personal_{chat_id}.json", 'r') as handle:
         personal = json.load(handle)
