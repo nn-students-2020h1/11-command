@@ -33,7 +33,7 @@ def error(update: Update, context: CallbackContext):
 def main():
     updater = Updater(bot=bot, use_context=True)
 
-    # on different commands - answer in Telegram
+    # on different commands - ans   wer in Telegram
     updater.dispatcher.add_handler(CommandHandler('start', tg.command_start))
     updater.dispatcher.add_handler(CommandHandler('help', tg.command_chat_help))
     updater.dispatcher.add_handler(CommandHandler('history', tg.command_history))
