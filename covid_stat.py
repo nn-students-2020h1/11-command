@@ -145,7 +145,7 @@ class CovidWorldStat:
     def set_date(days_ago=0):
         date_format = '%m-%d-%Y'
         today = datetime.now() - timedelta(days=days_ago)
-        yesterday = today - timedelta(days=days_ago - 1)
+        yesterday = datetime.now() - timedelta(days=days_ago + 1)
         return today.strftime(date_format), yesterday.strftime(date_format)
 
     def get_today_df(self):
@@ -199,6 +199,8 @@ class CovidWorldStat:
                 elif 500 <= data_frame['Confirmed'][i] <= 1000:
                     color = 'orange'
                 else:
+                    continue
+                if data_frame['Province_State'][i] == '':
                     continue
                 folium.Marker(location=[data_frame['Lat'][i], data_frame['Long_'][i]],
                               popup=f"{data_frame['Province_State'][i]}:{data_frame['Confirmed'][i]}",
