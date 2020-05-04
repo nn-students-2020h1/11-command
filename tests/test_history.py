@@ -4,6 +4,7 @@ import auxiliary_functions
 import pymongo
 import mongomock
 import pandas as pd
+import database
 
 
 def get_action():
@@ -16,35 +17,36 @@ def get_action():
 
 
 class TestLoadHistory(unittest.TestCase):
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def setUp(self):
+        with patch('database.pymongo.MongoClient') as mock_client:
+            mock_client.return_value = pymongo.MongoClient('testserver.com')
+            self.db = database.UserDataBase()
 
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_get_actions(self):
-        with patch("auxiliary_functions.db_user_actions",
-                   new=pymongo.MongoClient('testserver.com')['user_actions']) as mock_db:
-            mock_db['0'].insert_one(get_action())
-            self.assertEqual(auxiliary_functions.get_list_actions('0'),
-                             [['Test Name', 'Test Get Actions', 'Action got successfully', '14:35:44']])
+        self.db.db_user_actions = pymongo.MongoClient('testserver.com')['user_actions']
+        self.db.add_user_action(user_id='111', user_action=get_action())
+        self.assertEqual(self.db.get_user_actions(user_id='111'), [[value for value in get_action().values()]])
 
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_get_empty_history(self):
-        with patch("auxiliary_functions.db_user_actions",
-                   new=pymongo.MongoClient('testserver.com')['user_actions']):
-            self.assertEqual(auxiliary_functions.get_list_actions('0'), [])
+        self.assertEqual(self.db.get_user_actions(user_id='0'), [])
+
+    def tearDown(self):
+        self.db = database.UserDataBase()
 
 
 class TestCSV(unittest.TestCase):
     @mongomock.patch(servers=(('testserver.com', 27017),))
-    def test_data_exists(self):
-        with patch("auxiliary_functions.db_covid_csv",
-                   new=pymongo.MongoClient('testserver.com')['covid_csv']) as mock_db:
-            mock_db['01.01.01'].insert_one({"test": "test"})
-            self.assertTrue(auxiliary_functions.check_exist_dates('01.01.01'))
+    def setUp(self):
+        with patch('database.pymongo.MongoClient') as mock_client:
+            mock_client.return_value = pymongo.MongoClient('testserver.com')
+            self.db = database.CsvDataBase()
 
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_no_data(self):
-        with patch("auxiliary_functions.db_covid_csv",
-                   new=pymongo.MongoClient('testserver.com')['covid_csv']):
-            self.assertFalse(auxiliary_functions.check_exist_dates('01.01.01'))
+        self.assertFalse(self.db.check_exist_dates('0'))
 
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_csv_from_db(self):
