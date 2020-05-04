@@ -13,10 +13,7 @@ class UserDataBase:
         self.db_user_actions[user_id].insert_one(user_action)
 
     def get_user_actions(self, user_id: str) -> list:
-        actions = []
-        for action in self.db_user_actions[user_id].find():
-            actions.append([action['user_name'], action['function'], action['text'], action['time']])
-        return actions
+        return [[action['user_name'], action['function'], action['text'], action['time']] for action in self.db_user_actions[user_id].find()]
 
 
 class CsvDataBase:

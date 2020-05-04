@@ -25,7 +25,7 @@ class Player:
             for card in self.cards:
                 self.game.deck.beaten(card)
 
-    def view_deck(self):
+    def view_deck(self) -> str:
         index = 0
         msg = ""
         for playable_card in self.cards:
@@ -33,7 +33,7 @@ class Player:
             index += 1
         return msg
 
-    def deck_choose_keyboard(self):
+    def deck_choose_keyboard(self) -> InlineKeyboardMarkup:
         index = 0
         keyboard = []
         for playable_card in self.cards:
