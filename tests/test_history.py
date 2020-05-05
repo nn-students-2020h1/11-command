@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch
-import sys
 import pymongo
 import mongomock
 import pandas as pd
@@ -54,6 +53,11 @@ class TestCSV(unittest.TestCase):
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_no_data(self):
         self.assertFalse(self.db.check_exist_dates('0'))
+
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_data_exists(self):
+        self.db.db_covid_csv['1'].insert_one({'Test': 'test'})
+        self.assertTrue(self.db.check_exist_dates('1'))
 
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_csv_from_db(self):

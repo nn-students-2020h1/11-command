@@ -22,12 +22,12 @@ class CsvDataBase:
         self.client = pymongo.MongoClient()
         self.db_covid_csv = self.client['covid_csv']
 
-    def check_exist_dates(self, date: str):
+    def check_exist_dates(self, date: str) -> bool:
         if self.db_covid_csv[date].find_one() is None:
             return False
         return True
 
-    def get_csv_from_db(self, date: str):
+    def get_csv_from_db(self, date: str) -> dict:
         csv_content = self.db_covid_csv[date].find_one()
         del csv_content['_id']
         return csv_content

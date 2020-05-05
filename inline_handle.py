@@ -46,7 +46,7 @@ Covid = CovidNews()
 
 class InlineKeyboardFactory:  # provides all inline keyboards
     @staticmethod
-    def get_inline_contrast_keyboard():  # keyboard for image contrast level
+    def get_inline_contrast_keyboard() -> InlineKeyboardMarkup:  # keyboard for image contrast level
         """Get custom inline keyboard for modifying contrast of an image"""
 
         keyboard = [
@@ -65,7 +65,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_coronavirus_keyboard():  # keyboard for /corona_stat
+    def get_inline_coronavirus_keyboard() -> InlineKeyboardMarkup:  # keyboard for /corona_stat
         """Get custom inline keyboard for coronavirus stats"""
         keyboard = [
             [
@@ -75,7 +75,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_news_keyboard():  # Get three news buttons
+    def get_inline_news_keyboard() -> InlineKeyboardMarkup:  # Get three news buttons
         Covid.shuffle_news()
         keyboard = [
             [
@@ -101,7 +101,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_keyboard_more_information():
+    def get_inline_keyboard_more_information() -> InlineKeyboardMarkup:
         keyboard = [
             [
                 InlineKeyboardButton("Read more in source",
@@ -116,7 +116,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_stayhome():
+    def get_inline_stayhome() -> InlineKeyboardMarkup:
         """Get custom inline keyboard for coronavirus infection probability"""
         keyboard = [
             [
@@ -127,7 +127,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_bloodtype():
+    def get_inline_bloodtype() -> InlineKeyboardMarkup:
         keyboard = [
             [
                 InlineKeyboardButton("I (0)", callback_data=CALLBACK_BUTTON_BLOOD_I)
@@ -148,7 +148,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_uno_choose_player():
+    def get_inline_uno_choose_player() -> InlineKeyboardMarkup:
         keyboard = [
             [
                 InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT)
