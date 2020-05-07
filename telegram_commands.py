@@ -7,7 +7,7 @@ from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, Re
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
 from setup import TOKEN, PROXY
-from auxiliary_functions import handle_command, handle_image, get_list_actions
+from auxiliary_functions import handle_command, handle_image, get_list_actions, handle_message
 from image_handler import ImageHandler
 from countryinfo import CountryInfo
 from googletrans import Translator
@@ -61,7 +61,8 @@ def command_chat_help(update: Update, context: CallbackContext):
 @handle_command
 def command_echo(update: Update, context: CallbackContext):
     """Echo the user message."""
-    update.message.reply_text(update.message.text)
+    response = handle_message(update.message.text)
+    update.message.reply_text(response, parse_mode=ParseMode.HTML)
 
 
 def get_quote(url: str):
