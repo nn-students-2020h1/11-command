@@ -33,9 +33,12 @@ class CsvDataBase:
         return csv_content
 
     def add_data_frame(self, date: str):
-        s = pandas.read_csv("https://raw.githubusercontent.com/"
-                            "CSSEGISandData/COVID-19/master/csse_covid_19_data/"
-                            f"csse_covid_19_daily_reports/{date}.csv")
+        try:
+            s = pandas.read_csv("https://raw.githubusercontent.com/"
+                                "CSSEGISandData/COVID-19/master/csse_covid_19_data/"
+                                f"csse_covid_19_daily_reports/{date}.csv")
+        except:
+            raise Exception("Such date doesn't exist")
         csv_dict = s.to_dict()
         s = {}
 

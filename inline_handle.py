@@ -10,6 +10,7 @@ from covid_news import CovidNews
 from lxml import html
 from uno.player import Player
 from uno.game import Game
+from uno.card import RED, GREEN, BLUE, YELLOW
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -36,6 +37,10 @@ CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
 
 CALLBACK_BUTTON_UNO_BOT = "callback_uno_bot"
 CALLBACK_BUTTON_UNO_DRAW_ONE = "callback_uno_draw_one"
+CALLBACK_BUTTON_UNO_RED = "callback_uno_red"
+CALLBACK_BUTTON_UNO_GREEN = "callback_uno_green"
+CALLBACK_BUTTON_UNO_BLUE = "callback_uno_blue"
+CALLBACK_BUTTON_UNO_YELLOW = "callback_uno_yellow"
 
 bot = Bot(
     token=TOKEN,
@@ -152,6 +157,24 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         keyboard = [
             [
                 InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT)
+            ]
+        ]
+        return InlineKeyboardMarkup(keyboard)
+
+    @staticmethod
+    def get_inline_uno_choose_color() -> InlineKeyboardMarkup:
+        keyboard = [
+            [
+                InlineKeyboardButton("RED 🟥", callback_data=CALLBACK_BUTTON_UNO_BOT)
+            ],
+            [
+                InlineKeyboardButton("GREEN 🟩", callback_data=CALLBACK_BUTTON_UNO_BOT)
+            ],
+            [
+                InlineKeyboardButton("BLUE 🟦", callback_data=CALLBACK_BUTTON_UNO_BOT)
+            ],
+            [
+                InlineKeyboardButton("YELLOW 🟨", callback_data=CALLBACK_BUTTON_UNO_BOT)
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -334,3 +357,15 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                     tg.GAME.current_player.play()'''
             else:
                 tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])
+
+        elif data == CALLBACK_BUTTON_UNO_RED:
+            tg.GAME.choose_color(tg.GAME, RED)
+
+        elif data == CALLBACK_BUTTON_UNO_GREEN:
+            tg.GAME.choose_color(tg.GAME, GREEN)
+
+        elif data == CALLBACK_BUTTON_UNO_BLUE:
+            tg.GAME.choose_color(tg.GAME, BLUE)
+
+        elif data == CALLBACK_BUTTON_UNO_YELLOW:
+            tg.GAME.choose_color(tg.GAME, YELLOW)

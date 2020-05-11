@@ -7,7 +7,7 @@ from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, Re
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
 from setup import TOKEN, PROXY
-from auxiliary_functions import handle_command, handle_image, get_list_actions
+from auxiliary_functions import handle_command, handle_image, get_list_actions, handle_message
 from image_handler import ImageHandler
 from countryinfo import CountryInfo
 from googletrans import Translator
@@ -61,7 +61,8 @@ def command_chat_help(update: Update, context: CallbackContext):
 @handle_command
 def command_echo(update: Update, context: CallbackContext):
     """Echo the user message."""
-    update.message.reply_text(update.message.text)
+    response = handle_message(update.message.text)
+    update.message.reply_text(response, parse_mode=ParseMode.HTML)
 
 
 def get_quote(url: str):
@@ -107,10 +108,23 @@ def command_fact(update: Update, context: CallbackContext):
 def command_corona_stat(update: Update, context: CallbackContext):
     """This method is processing statistic's corona virus"""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+    user_message = update.message['text']
+    user_date = user_message.replace('/corona_stat', '').strip()
 
     top_province = CovidWorldStat()
 
-    top_covid_places = top_province.get_difference_disease(top_province.get_today_df(), top_province.get_yesterday_df())
+    top_province.set_date(days_ago=1)
+    if user_date:
+        try:
+            top_province.set_user_date(user_date)
+            top_province.set_data_frame()
+
+        except Exception as ex:
+            bot.send_message(chat_id=update.effective_message.chat_id,
+                             text=str(ex))
+            return None
+
+    top_covid_places = top_province.get_difference_disease(top=5)
     top_places_message = ''
     for place in top_covid_places:
         top_places_message += place
@@ -338,10 +352,11 @@ def uno_game_handler(update: Update, chat_id: str, players: list, game: Game):
 
 
 def uno_play_msg(chat_id: str, game: Game):
-    players = game.players
-    bot.send_message(chat_id=chat_id, text=f"Your turn! Boss has {players[1].cards.__len__()} cards...")
-    bot.send_message(chat_id=chat_id,
+    if not game.current_player.cards.__len__ == 0:
+        players = game.players
+        bot.send_message(chat_id=chat_id, text=f"Your turn! Boss has {players[1].cards.__len__()} cards...")
+        bot.send_message(chat_id=chat_id,
                      text=f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:")  # noqa: E501  # TODO: will fix this later
-    bot.send_message(chat_id=chat_id, text=players[0].view_deck())
-    bot.send_message(chat_id=chat_id, text="Choose card by index:",
-                     reply_markup=game.current_player.deck_choose_keyboard())
+        bot.send_message(chat_id=chat_id, text=players[0].view_deck())
+        bot.send_message(chat_id=chat_id, text="Choose card by index:",
+                         reply_markup=game.current_player.deck_choose_keyboard())

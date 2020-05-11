@@ -2,6 +2,8 @@ import time
 from telegram import ChatAction, Bot
 from setup import TOKEN, PROXY
 from database import UserDataBase, CsvDataBase
+import apiai
+import json
 
 bot = Bot(
     token=TOKEN,
@@ -60,3 +62,11 @@ def handle_image(func):
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=open("result_user_images/res.jpg", mode='rb'))
     return inner
+
+def handle_message(message: str) -> str:
+    request = apiai.ApiAI('da1cb35fc9384d28b8ab60ab7e2e2ed6').text_request()
+    request.lang = 'en'
+    request.session_id = 'session_1'
+    request.query = message
+    response = json.loads(request.getresponse().read().decode('utf-8'))
+    return response['result']['fulfillment']['speech']

@@ -8,6 +8,7 @@ from auxiliary_functions import check_exist_dates, get_csv_from_db, add_date_to_
 from datetime import datetime, timedelta
 import numpy as np
 from scipy.spatial.distance import cosine
+import re
 
 """This class contains two class. You can look at world covid stat or region covid stat"""
 
@@ -135,32 +136,60 @@ class CovidRegionStat:
 class CovidWorldStat:
 
     def __init__(self):
+        self.today_date = ''
+        self.yesterday_date = ''
+        self.today_df = ''
+        self.yesterday_df = ''
 
-        self.today_date, self.yesterday_date = CovidWorldStat.set_date(days_ago=1)
-
-        self.today_df = self.get_data_frame(self.today_date)
-        self.yesterday_df = self.get_data_frame(self.yesterday_date)
-
-    @staticmethod
-    def set_date(days_ago=0):
+    def set_date(self, days_ago):
         date_format = '%m-%d-%Y'
         today = datetime.now() - timedelta(days=days_ago)
         yesterday = datetime.now() - timedelta(days=days_ago + 1)
-        return today.strftime(date_format), yesterday.strftime(date_format)
+        self.today_date = today.strftime(date_format)
+        self.yesterday_date = yesterday.strftime(date_format)
 
-    def get_today_df(self):
-        return self.today_df
+    def set_user_date(self, date):
+        date = re.sub(r'[/ -.]', '-', date)
 
-    def get_yesterday_df(self):
-        return self.yesterday_df
+        date = self.check_user_date_mdy(date)
+        if not date:
+            raise Exception("Enter correct date mm-dd-yy")
+
+        date_format = '%m-%d-%Y'
+
+        date = datetime.strptime(date, date_format)
+
+        yesterday = date - timedelta(1)
+
+        self.today_date = date.strftime(date_format)
+        self.yesterday_date = yesterday.strftime(date_format)
 
     @staticmethod
-    def get_difference_disease(today_df: pd.DataFrame, yesterday_df: pd.DataFrame, top=5) -> list:
+    def check_user_date_mdy(date: str) -> str:
+        date = re.match(r'^((0[1-9]|1[012])[/ -.](0[1-9]|[12][0-9]|3[01])[/ -.]\d{4})$', date)
 
-        today_df = today_df.sort_values(by=['Province_State']).reset_index(drop=True)  # Reset all indexes
-        yesterday_df = yesterday_df.sort_values(by=['Province_State']).reset_index(drop=True)  # Reset all indexes
-        yesterday_df = yesterday_df.append(today_df[~today_df['Province_State'].isin(yesterday_df['Province_State'])])
-        yesterday_df = yesterday_df.sort_values(by=['Province_State']).reset_index(drop=True)
+        if date:
+            return date.group(0)
+
+    def set_data_frame(self):
+        self.today_df = self.get_data_frame(self.today_date)
+        self.yesterday_df = self.get_data_frame(self.yesterday_date)
+
+    def get_difference_disease(self, top=5) -> list:
+
+        today_df = self.today_df
+        yesterday_df = self.yesterday_df
+
+        province_state = 'Province_State'
+        try:
+            today_df[province_state]
+        except:
+            province_state = 'Province/State'
+
+        today_df = today_df.sort_values(by=[province_state]).reset_index(drop=True)  # Reset all indexes
+        yesterday_df = yesterday_df.sort_values(by=[province_state]).reset_index(drop=True)  # Reset all indexes
+        yesterday_df = yesterday_df.append(today_df[~today_df[province_state].isin(yesterday_df[province_state])])
+        yesterday_df = yesterday_df.sort_values(by=[province_state]).reset_index(drop=True)
         today_df['Confirmed'] = today_df['Confirmed'] - yesterday_df['Confirmed']  # Get count confirmed
         today_df.loc[
             today_df['Confirmed'] < 0] *= -1  # If new entry, it'll be less than zero, 'cause we need to change it
@@ -172,8 +201,13 @@ class CovidWorldStat:
         for i in today_df.index:
             if top + 1 == place:
                 break
-            if today_df['Province_State'][i] != '':
-                output = f"<b>{place}</b>  {today_df['Combined_Key'][i]} - {today_df['Confirmed'][i]}\n"
+            if today_df[province_state][i] != '':
+
+                try:
+                    temp = today_df['Combined_Key'][i]
+                except:
+                    temp = today_df[province_state][i]
+                output = f"<b>{place}</b>  {temp} - {today_df['Confirmed'][i]}\n"
                 place += 1
                 top_covid_places.append(output)
         CovidWorldStat.get_covid_map(data_frame=today_df)  # Get map with sick
@@ -182,7 +216,6 @@ class CovidWorldStat:
 
     @staticmethod
     def get_data_frame(date):
-
         if not check_exist_dates(date):
             add_date_to_db(date)
         csv_content = get_csv_from_db(date)

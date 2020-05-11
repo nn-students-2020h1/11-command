@@ -92,8 +92,8 @@ class TestDatabaseOldFunctions(unittest.TestCase):
             mock_client.return_value = pymongo.MongoClient('testserver.com')
             self.db = database.CsvDataBase()
         self.db.db_covid_csv = pymongo.MongoClient('testserver.com')['covid_csv']
-        self.db.add_data_frame('01.01.02')
         with patch('auxiliary_functions.db_csv_files', new=self.db):
+            auxiliary_functions.add_date_to_db('01.01.02')
             self.assertEqual(auxiliary_functions.get_csv_from_db('01.01.02'), {'Admin2': {'0': 'Abbeville'},
                                                                                'Country_Region': {'0': 'US'},
                                                                                'FIPS': {'0': '45001'},

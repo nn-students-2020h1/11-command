@@ -79,10 +79,9 @@ class Game:
             if not self.current_player.is_human:
                 self.choose_color(random.choice(COLORS))
             else:
-                color = input("Color: ")
-                self.choose_color(color)
-            print(f"Chosen color {self.last_card.color}")
-            bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
+                from inline_handle import InlineKeyboardFactory
+                bot.send_message(chat_id=self.current_player.chat_id, text="Choose color:",
+                                 reply_markup=InlineKeyboardFactory.get_inline_uno_choose_color())
             return None
         elif card.special == DRAW_FOUR:
             self.draw_counter += 4
@@ -102,4 +101,6 @@ class Game:
 
     def choose_color(self, color: COLORS):
         self.last_card.color = color
+        print(f"Chosen color {self.last_card.color}")
+        bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
         self.next_turn()
