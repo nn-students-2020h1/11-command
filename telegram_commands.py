@@ -111,6 +111,9 @@ def command_corona_stat(update: Update, context: CallbackContext):
     user_message = update.message['text']
     user_date = user_message.replace('/corona_stat', '').strip()
 
+    user_message = update.message['text']
+    user_date = user_message.replace('/corona_stat', '').strip()
+
     top_province = CovidWorldStat()
 
     top_province.set_date(days_ago=1)
@@ -128,11 +131,9 @@ def command_corona_stat(update: Update, context: CallbackContext):
     top_places_message = ''
     for place in top_covid_places:
         top_places_message += place
-
     bot.send_message(chat_id=update.effective_message.chat_id, text=top_places_message,
                      reply_markup=inline_handle.InlineKeyboardFactory.get_inline_coronavirus_keyboard(),
                      parse_mode=ParseMode.HTML)
-
     update.message.reply_text("Your map is processing. Please, wait...")
     bot.send_document(chat_id=update.message.chat_id,  # Send to user map with sick
                       document=open("corona_information/map.html", mode='rb'))
