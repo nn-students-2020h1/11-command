@@ -7,7 +7,7 @@ from telegram import Update, ParseMode, Bot, ChatAction, ReplyKeyboardMarkup, Re
 from telegram.ext import CallbackContext
 from bs4 import BeautifulSoup
 from setup import TOKEN, PROXY
-from auxiliary_functions import handle_command, handle_image, get_list_actions
+from auxiliary_functions import handle_command, handle_image, get_list_actions, handle_message
 from image_handler import ImageHandler
 from countryinfo import CountryInfo
 from googletrans import Translator
@@ -61,7 +61,8 @@ def command_chat_help(update: Update, context: CallbackContext):
 @handle_command
 def command_echo(update: Update, context: CallbackContext):
     """Echo the user message."""
-    update.message.reply_text(update.message.text)
+    response = handle_message(update.message.text)
+    update.message.reply_text(response, parse_mode=ParseMode.HTML)
 
 
 def get_quote(url: str):
@@ -108,17 +109,29 @@ def command_corona_stat(update: Update, context: CallbackContext):
     """This method is processing statistic's corona virus"""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
 
+    user_message = update.message['text']
+    user_date = user_message.replace('/corona_stat', '').strip()
+
     top_province = CovidWorldStat()
 
-    top_covid_places = top_province.get_difference_disease(top_province.get_today_df(), top_province.get_yesterday_df())
+    top_province.set_date(days_ago=1)
+    if user_date:
+        try:
+            top_province.set_user_date(user_date)
+            top_province.set_data_frame()
+
+        except Exception as ex:
+            bot.send_message(chat_id=update.effective_message.chat_id,
+                             text=str(ex))
+            return None
+
+    top_covid_places = top_province.get_difference_disease(top=5)
     top_places_message = ''
     for place in top_covid_places:
         top_places_message += place
-
     bot.send_message(chat_id=update.effective_message.chat_id, text=top_places_message,
                      reply_markup=inline_handle.InlineKeyboardFactory.get_inline_coronavirus_keyboard(),
                      parse_mode=ParseMode.HTML)
-
     update.message.reply_text("Your map is processing. Please, wait...")
     bot.send_document(chat_id=update.message.chat_id,  # Send to user map with sick
                       document=open("corona_information/map.html", mode='rb'))
