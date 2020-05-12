@@ -88,8 +88,9 @@ class Game:
             if not self.current_player.is_human:
                 self.choose_color(random.choice(COLORS))
             else:
-                color = input("Color: ")  # ADD INLINE COLOR KEYBOARD
-                self.choose_color(color)
+                from inline_handle import InlineKeyboardFactory
+                bot.send_message(chat_id=self.current_player.chat_id, text="Choose color:",
+                                 reply_markup=InlineKeyboardFactory.get_inline_uno_choose_color())
             print(f"Chosen color {self.last_card.color}")
             bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
             return None
