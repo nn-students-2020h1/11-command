@@ -14,7 +14,7 @@ This is a repository for Telegram bot that will be developed by 11th team during
 ## Search
 
 1. Open Telegram
-2. Search for `ВСТАВЬТЕ ПЖ ИМЕНА СВОИХ БОТОВ` bot.
+2. Search for `@sesorov_bot` bot.
 3. Click `Start bot`.
 
 ## Features
@@ -30,6 +30,8 @@ This is a repository for Telegram bot that will be developed by 11th team during
 * `/infected` - get the probability of you getting COVID - 19
 * `/recommendation` - get the recommendations to avoid COVID - 19
 * `/stat 'your region'` - get the information and a plot of spreading of COVID-19 in your region
+* `/uno` - play UNO game
+* Or just write anything to our bot - it will support the conversation!
 
 ## Support
 

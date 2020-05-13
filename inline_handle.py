@@ -35,7 +35,8 @@ CALLBACK_BUTTON_BLOOD_II = "callback_blood_II"
 CALLBACK_BUTTON_BLOOD_III = "callback_blood_III"
 CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
 
-CALLBACK_BUTTON_UNO_BOT = "callback_uno_bot"
+CALLBACK_BUTTON_UNO_BOT_1 = "callback_uno_bot_1"
+CALLBACK_BUTTON_UNO_BOT_2 = "callback_uno_bot_2"
 CALLBACK_BUTTON_UNO_DRAW_ONE = "callback_uno_draw_one"
 CALLBACK_BUTTON_UNO_RED = "callback_uno_red"
 CALLBACK_BUTTON_UNO_GREEN = "callback_uno_green"
@@ -156,7 +157,10 @@ class InlineKeyboardFactory:  # provides all inline keyboards
     def get_inline_uno_choose_player() -> InlineKeyboardMarkup:
         keyboard = [
             [
-                InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT)
+                InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT_1)
+            ],
+            [
+                InlineKeyboardButton("Two bosses!", callback_data=CALLBACK_BUTTON_UNO_BOT_2)
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -191,56 +195,51 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             json.dump(data, handle, ensure_ascii=False, indent=2)
         return file, add_data
 
-    @staticmethod  # noqa: C901  # TODO: it works, so I don't wanna to ruin it
+    @staticmethod
+    def change_contrast_level(factor: float, base_img: str, res_img: str, chat_id, send: str):
+        img_h.get_contrast_img(factor=factor, base_img=base_img, res_img=res_img)
+        # replace the existing image with an enhanced one
+        temp_message = bot.send_photo(chat_id=chat_id, photo=open(send, mode='rb'),
+                                      reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
+        bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+
+    @staticmethod  # noqa: C901  # TODO: it works, so I don't wanna ruin it
     def handle_keyboard_callback(update: Update, context=None):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
         data = query.data  # callback_data of pushed button
         chat_id = update.effective_message.chat_id  # chat id for sending messages
 
         if data == CALLBACK_BUTTON_01:
-            img_h.get_contrast_img(0.1, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=0.1, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
             return CALLBACK_BUTTON_01
 
         elif data == CALLBACK_BUTTON_05:
-            img_h.get_contrast_img(0.5, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=0.5, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
+            return CALLBACK_BUTTON_05
 
         elif data == CALLBACK_BUTTON_m01:
-            img_h.get_contrast_img(-0.1, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace existing image with an enhanced one
-
-            temp_message = bot.send_photo(chat_id=chat_id,
-                                          photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=-0.1, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
+            return CALLBACK_BUTTON_m01
 
         elif data == CALLBACK_BUTTON_m05:
-            img_h.get_contrast_img(-0.5, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace existing image with an enhanced one
-
-            temp_message = bot.send_photo(chat_id=chat_id,
-                                          photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=-0.5, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
+            return CALLBACK_BUTTON_m05
 
         elif data == CALLBACK_BUTTON_FIN:
-            img_h.get_contrast_img(0.0, 'initial_user_images/initial.jpg',
-                                   'result_user_images/res.jpg')  # get final result after editing
-            final_message = bot.send_photo(chat_id=chat_id,
-                                           photo=open("result_user_images/res.jpg", mode='rb'))
-            bot.delete_message(chat_id, final_message.message_id - 1)  # deletes previous message with an old image
-
+            InlineCallback.change_contrast_level(factor=0.0, base_img='initial_user_images/initial.jpg',
+                                                 res_img='result_user_images/res.jpg', chat_id=chat_id,
+                                                 send='result_user_images/res.jpg')
             reply_markup = ReplyKeyboardRemove()  # Remove keyboard
             bot.send_message(chat_id=chat_id,
-                             text='Upload new image',
+                             text='Here you are!',
                              reply_markup=reply_markup)
 
         elif data == CALLBACK_BUTTON_COVID19_RU:
@@ -334,7 +333,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             bot.send_message(chat_id=chat_id,
                              text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
 
-        elif data == CALLBACK_BUTTON_UNO_BOT:
+        elif data == CALLBACK_BUTTON_UNO_BOT_1:
             game = Game()
             tg.GAME = game
             tg.CHAT_ID = chat_id
@@ -343,6 +342,19 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                                                                          Player(chat_id=chat_id,
                                                                                 game=game, is_human=False,
                                                                                 name='Boss')], game=game)
+
+        elif data == CALLBACK_BUTTON_UNO_BOT_2:
+            game = Game()
+            tg.GAME = game
+            tg.CHAT_ID = chat_id
+            tg.uno_game_handler(update=update, chat_id=chat_id, players=[Player(chat_id=chat_id,
+                                                                                game=game, is_human=True, name='You'),
+                                                                         Player(chat_id=chat_id,
+                                                                                game=game, is_human=False,
+                                                                                name='Boss Intel'),
+                                                                         Player(chat_id=chat_id,
+                                                                                game=game, is_human=False,
+                                                                                name='Boss AMD')], game=game)
 
         elif data == CALLBACK_BUTTON_UNO_DRAW_ONE:
             tg.GAME.current_player.draw()

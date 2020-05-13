@@ -16,7 +16,6 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from covid_stat import CovidRegionStat, CovidWorldStat
 from uno.game import Game
-from uno.player import Player
 
 bot = Bot(
     token=TOKEN,
@@ -38,6 +37,7 @@ def command_start(update: Update, context: CallbackContext):
     update.message.reply_text(f'Hi, {update.effective_user.first_name}!')
     update.message.reply_text('Please, type <b>/help</b> to see the list of commands.',
                               parse_mode=ParseMode.HTML)
+    return update.effective_user.first_name
 
 
 @handle_command
@@ -53,9 +53,11 @@ def command_chat_help(update: Update, context: CallbackContext):
                               "<b>/news</b> to see fresh news about COVID-19\n" +
                               "<b>/infected</b> to get the probability of you getting COVID-19\n" +
                               "<b>/recommendation</b> to get the recommendation about COVID-19\n" +
-                              "<b>/stat + your region</b> to get the covid_19 plot your region\n",
+                              "<b>/stat + your region</b> to get the covid_19 plot your region\n" +
+                              "<b>/uno</b> to play UNO game\n",
                               parse_mode=ParseMode.HTML
                               )
+    return "success"
 
 
 @handle_command
@@ -63,6 +65,7 @@ def command_echo(update: Update, context: CallbackContext):
     """Echo the user message."""
     response = handle_message(update.message.text)
     update.message.reply_text(response, parse_mode=ParseMode.HTML)
+    return response
 
 
 def get_quote(url: str):
@@ -91,6 +94,7 @@ def command_history(update: Update, context: CallbackContext):
         output += str(f"<b>function:</b> {action[1]}, <b>text</b>: {action[2]}, <b>time</b>: {action[3]}\n")
 
     update.message.reply_text(output, parse_mode=ParseMode.HTML)
+    return output
 
 
 @handle_command
@@ -353,7 +357,7 @@ def uno_game_handler(update: Update, chat_id: str, players: list, game: Game):
 
 
 def uno_play_msg(chat_id: str, game: Game):
-    if not game.current_player.cards.__len__ == 0:
+    if not game.current_player.cards.__len__() == 0:
         players = game.players
         bot.send_message(chat_id=chat_id, text=f"Your turn! Boss has {players[1].cards.__len__()} cards...")
         bot.send_message(chat_id=chat_id,

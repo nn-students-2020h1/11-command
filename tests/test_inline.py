@@ -1,4 +1,5 @@
 import unittest
+import inline_handle
 
 from unittest import mock
 from unittest.mock import patch
@@ -6,8 +7,8 @@ from inline_handle import InlineKeyboardFactory, InlineCallback
 from telegram import InlineKeyboardMarkup
 
 
-def yet_another_func(*args):
-    return ''
+def simple_func(factor=None, base_img=None, res_img=None, chat_id=None):
+    pass
 
 
 class TestKeyboardFactory(unittest.TestCase):
@@ -29,6 +30,9 @@ class TestKeyboardFactory(unittest.TestCase):
     def test_uno_choose_player_keyboard(self):
         self.assertIsInstance(InlineKeyboardFactory.get_inline_uno_choose_player(), InlineKeyboardMarkup)
 
+    def test_inline_uno_choose_color(self):
+        self.assertIsInstance(InlineKeyboardFactory.get_inline_uno_choose_color(), InlineKeyboardMarkup)
+
 
 class TestInlineCallback(unittest.TestCase):
 
@@ -42,12 +46,38 @@ class TestInlineCallback(unittest.TestCase):
             file_name, file_data = InlineCallback.update_data({"new": "data"}, "file.json")
         self.assertEqual(file_data, {"new": "data"})
 
-    """TEST BELOW FAILS
-    @patch("inline_handle.img_h.get_contrast_img", mock.MagicMock)
-    @patch("inline_handle.bot.send_photo", mock.MagicMock)
-    @patch("inline_handle.bot.delete_message", mock.Mock)
-    def test_callback(self):
+    def test_callback_01(self):
         with patch('telegram.Update') as mock_update:
             mock_update.effective_message.chat_id = 0
-            mock_update.callback_query.data = CALLBACK_BUTTON_01
-            self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update), CALLBACK_BUTTON_01)"""
+            mock_update.callback_query.data = inline_handle.CALLBACK_BUTTON_01
+            with patch('inline_handle.InlineCallback.change_contrast_level') as mock_func:
+                mock_func.return_value = None
+                self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update),
+                                 inline_handle.CALLBACK_BUTTON_01)
+
+    def test_callback_05(self):
+        with patch('telegram.Update') as mock_update:
+            mock_update.effective_message.chat_id = 0
+            mock_update.callback_query.data = inline_handle.CALLBACK_BUTTON_05
+            with patch('inline_handle.InlineCallback.change_contrast_level') as mock_func:
+                mock_func.return_value = None
+                self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update),
+                                 inline_handle.CALLBACK_BUTTON_05)
+
+    def test_callback_m01(self):
+        with patch('telegram.Update') as mock_update:
+            mock_update.effective_message.chat_id = 0
+            mock_update.callback_query.data = inline_handle.CALLBACK_BUTTON_m01
+            with patch('inline_handle.InlineCallback.change_contrast_level') as mock_func:
+                mock_func.return_value = None
+                self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update),
+                                 inline_handle.CALLBACK_BUTTON_m01)
+
+    def test_callback_m05(self):
+        with patch('telegram.Update') as mock_update:
+            mock_update.effective_message.chat_id = 0
+            mock_update.callback_query.data = inline_handle.CALLBACK_BUTTON_m05
+            with patch('inline_handle.InlineCallback.change_contrast_level') as mock_func:
+                mock_func.return_value = None
+                self.assertEqual(inline_handle.InlineCallback.handle_keyboard_callback(mock_update),
+                                 inline_handle.CALLBACK_BUTTON_m05)
