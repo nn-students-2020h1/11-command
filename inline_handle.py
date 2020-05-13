@@ -165,16 +165,16 @@ class InlineKeyboardFactory:  # provides all inline keyboards
     def get_inline_uno_choose_color() -> InlineKeyboardMarkup:
         keyboard = [
             [
-                InlineKeyboardButton("RED 🟥", callback_data=CALLBACK_BUTTON_UNO_BOT)
+                InlineKeyboardButton("RED 🟥", callback_data=CALLBACK_BUTTON_UNO_RED)
             ],
             [
-                InlineKeyboardButton("GREEN 🟩", callback_data=CALLBACK_BUTTON_UNO_BOT)
+                InlineKeyboardButton("GREEN 🟩", callback_data=CALLBACK_BUTTON_UNO_GREEN)
             ],
             [
-                InlineKeyboardButton("BLUE 🟦", callback_data=CALLBACK_BUTTON_UNO_BOT)
+                InlineKeyboardButton("BLUE 🟦", callback_data=CALLBACK_BUTTON_UNO_BLUE)
             ],
             [
-                InlineKeyboardButton("YELLOW 🟨", callback_data=CALLBACK_BUTTON_UNO_BOT)
+                InlineKeyboardButton("YELLOW 🟨", callback_data=CALLBACK_BUTTON_UNO_YELLOW)
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -359,13 +359,13 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                 tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])
 
         elif data == CALLBACK_BUTTON_UNO_RED:
-            tg.GAME.choose_color(tg.GAME, RED)
+            tg.GAME.choose_color_static(tg.GAME, RED)
 
         elif data == CALLBACK_BUTTON_UNO_GREEN:
-            tg.GAME.choose_color(tg.GAME, GREEN)
+            tg.GAME.choose_color_static(tg.GAME, GREEN)
 
         elif data == CALLBACK_BUTTON_UNO_BLUE:
-            tg.GAME.choose_color(tg.GAME, BLUE)
+            tg.GAME.choose_color_static(tg.GAME, BLUE)
 
         elif data == CALLBACK_BUTTON_UNO_YELLOW:
-            tg.GAME.choose_color(tg.GAME, YELLOW)
+            tg.GAME.choose_color_static(tg.GAME, YELLOW)

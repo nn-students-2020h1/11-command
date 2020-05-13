@@ -92,7 +92,6 @@ class Game:
                 bot.send_message(chat_id=self.current_player.chat_id, text="Choose color:",
                                  reply_markup=InlineKeyboardFactory.get_inline_uno_choose_color())
             print(f"Chosen color {self.last_card.color}")
-            bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
             return None
         elif card.special not in SPECIAL_CARDS:
             self.next_turn()
@@ -105,3 +104,10 @@ class Game:
         print(f"Chosen color {self.last_card.color}")
         bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
         self.next_turn()
+
+    @staticmethod
+    def choose_color_static(current_game, color: COLORS) -> None:
+        current_game.last_card.color = color
+        bot.send_message(chat_id=current_game.current_player.chat_id,
+                         text=f"Chosen color {current_game.last_card.color}")
+        current_game.next_turn()

@@ -37,8 +37,10 @@ class Player:
         index = 0
         keyboard = []
         for playable_card in self.cards:
-            button = InlineKeyboardButton(index, callback_data=index)
-            keyboard.append([button])
+            if playable_card.color == self.game.last_card.color or playable_card.value == self.game.last_card.value or playable_card.special:  # noqa: E501  # TODO: if statement's length cannot be reduced
+                button = InlineKeyboardButton(f"{index}. {playable_card.color}, {playable_card.value}, {playable_card.special}",  # noqa: E501
+                                              callback_data=index)
+                keyboard.append([button])
             index += 1
         keyboard.append([InlineKeyboardButton("DRAW ONE", callback_data="callback_uno_draw_one")])
         return InlineKeyboardMarkup(keyboard)
