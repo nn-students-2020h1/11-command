@@ -4,6 +4,7 @@ from uno.card import COLORS, SPECIAL_CARDS
 import random
 
 from telegram import Bot
+from PIL import Image
 from setup import TOKEN, PROXY
 
 bot = Bot(
@@ -26,6 +27,7 @@ class Game:
     def __init__(self):
         self.players = list()
         self.last_card = None
+        self.round = 1
 
         while not self.last_card or self.last_card.special:
             self.deck = Deck()
@@ -51,6 +53,7 @@ class Game:
         else:
             from telegram_commands import uno_play_msg
             uno_play_msg(chat_id=self.current_player.chat_id, game=self.current_player.game)
+        self.round += 1
 
     def skip_next(self):
         if self.draw_counter != 0:
@@ -61,6 +64,7 @@ class Game:
         else:
             from telegram_commands import uno_play_msg
             uno_play_msg(chat_id=self.current_player.chat_id, game=self.current_player.game)
+        self.round += 1
 
     def play_card(self, card):
         self.deck.beaten(self.last_card)
@@ -104,6 +108,22 @@ class Game:
         print(f"Chosen color {self.last_card.color}")
         bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
         self.next_turn()
+
+    def get_board(self):
+        try:
+            raw_bg = Image.open("uno/images/playing_bg.png")
+        except:
+            raw_bg = Image.open("uno/images/background.png")
+        bg = Image.new('RGBA', (raw_bg.width, raw_bg.height))
+        bg.paste(raw_bg, (0, 0))
+        bg.paste(self.last_card.get_img().rotate(15, expand = 1), (raw_bg.width // 2 - 200 - random.randint(-30, 30),
+                                            raw_bg.height // 2 - 200 - random.randint(-30, 30)), self.last_card.get_img().rotate(15, expand = 1))
+        bg.save("uno/images/playing_bg.png")
+        temp = Image.open("uno/images/playing_bg.png")
+        tmp_c = temp.convert('RGB')
+        tmp_c.save("uno/images/playing_bg_tmp.jpg")
+        bot.send_photo(chat_id=self.current_player.chat_id, photo=open("uno/images/playing_bg_tmp.jpg", mode='rb'))
+
 
     @staticmethod
     def choose_color_static(current_game, color: COLORS) -> None:

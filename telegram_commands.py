@@ -16,6 +16,7 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from covid_stat import CovidRegionStat, CovidWorldStat
 from uno.game import Game
+from PIL import Image
 
 bot = Bot(
     token=TOKEN,
@@ -148,6 +149,7 @@ def command_get_news(update: Update, context: CallbackContext):  # You can get f
     bot.send_message(chat_id=update.effective_message.chat_id,
                      text='Choose news',
                      reply_markup=inline_handle.InlineKeyboardFactory.get_inline_news_keyboard())
+    return inline_handle.InlineKeyboardFactory.get_inline_news_keyboard()
 
 
 @handle_command
@@ -165,6 +167,7 @@ def command_recommendation(update: Update, context: CallbackContext):
                            'Disinfect your mobile phone after going out',
                            'Do not drink alcohol - this contribute weaken the immune system']
     update.message.reply_text(random.choice(recommendation_list))
+    return random.choice(recommendation_list)
 
 
 @handle_command
@@ -359,9 +362,18 @@ def uno_game_handler(update: Update, chat_id: str, players: list, game: Game):
 def uno_play_msg(chat_id: str, game: Game):
     if not game.current_player.cards.__len__() == 0:
         players = game.players
-        bot.send_message(chat_id=chat_id, text=f"Your turn! Boss has {players[1].cards.__len__()} cards...")
-        bot.send_message(chat_id=chat_id,
-                     text=f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:")  # noqa: E501  # TODO: will fix this later
-        bot.send_message(chat_id=chat_id, text=players[0].view_deck())
-        bot.send_message(chat_id=chat_id, text="Choose card by index:",
-                         reply_markup=game.current_player.deck_choose_keyboard())
+        msg = ""
+        for player in players:
+            msg += f"{player.name}: {player.cards.__len__()} cards\n"
+        msg += f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:\n"  # noqa: E501  # TODO: will fix this later
+        msg += game.current_player.view_deck()
+        bot.send_message(chat_id=chat_id, text=msg)
+        temp_message = bot.send_message(chat_id=chat_id, text="Choose card by index:",
+                                        reply_markup=game.current_player.deck_choose_keyboard())
+        game.get_board()
+        if game.round == 1:
+            bot.delete_message(chat_id, temp_message.message_id - 2)
+            bot.delete_message(chat_id, temp_message.message_id - 3)
+        else:
+            for i in range(2, 5):
+                bot.delete_message(chat_id, temp_message.message_id - i)

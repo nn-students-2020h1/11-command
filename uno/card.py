@@ -1,7 +1,9 @@
-RED = "red"
-GREEN = "green"
-BLUE = "blue"
-YELLOW = "yellow"
+from PIL import Image
+
+RED = "r"
+GREEN = "g"
+BLUE = "b"
+YELLOW = "y"
 
 COLORS = (RED, GREEN, BLUE, YELLOW)
 
@@ -35,3 +37,15 @@ class Card:
             return self.special
         else:
             return [self.color, self.value]
+
+    def get_img(self) -> Image:
+        if self.value and self.value != DRAW_TWO:
+            return Image.open(f"uno/images/{self.color}_{self.value}.png")
+        elif self.value == DRAW_TWO:
+            return Image.open(f"uno/images/{self.color}_draw.png")
+        elif self.value == SKIP:
+            return Image.open(f"uno/images/{self.color}_skip.png")
+        elif self.special == DRAW_FOUR:
+            return Image.open("uno/images/draw_four.png")
+        elif self.last_card.special == CHOOSE_COLOR:
+            return Image.open("uno/images/choosecolor.png")

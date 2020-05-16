@@ -6,6 +6,7 @@ import mongomock
 import database
 import telegram_commands
 import time
+import inline_handle
 
 
 class TestFunctions(unittest.TestCase):
@@ -57,3 +58,18 @@ class TestFunctions(unittest.TestCase):
                 telegram_commands.command_echo(self.update, self.CallbackContext)
                 self.assertEqual(telegram_commands.command_history(self.update, self.CallbackContext),
                                  "<b>function:</b> command_echo, <b>text</b>: Who created you?, <b>time</b>: 00:00:00\n")
+
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_command_get_news(self):
+        self.db.db_user_actions = pymongo.MongoClient('testserver.com')['user_actions']
+        with patch('auxiliary_functions.db_user_action', new=self.db):
+            with patch('telegram_commands.bot') as mock_bot:
+                mock_bot.send_message.return_value = None
+                self.assertEqual(telegram_commands.command_get_news(self.update, self.CallbackContext),
+                                 inline_handle.InlineKeyboardFactory.get_inline_news_keyboard())
+
+    @mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_command_recommendation(self):
+        self.db.db_user_actions = pymongo.MongoClient('testserver.com')['user_actions']
+        with patch('auxiliary_functions.db_user_action', new=self.db):
+            self.assertIsInstance(telegram_commands.command_recommendation(self.update, self.CallbackContext), str)
