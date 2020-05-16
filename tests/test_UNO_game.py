@@ -58,7 +58,7 @@ class TestGame(unittest.TestCase):
         self.game.add_player(player=self.player_1)
         self.game.add_player(player=self.player_2)
         self.last = self.game.last_card
-        self.game.play_card(self.player_1.cards[0])
+        self.game.play_card(self.game.last_card)
         self.assertIn(self.last, self.game.deck.discard_pile)
 
     @mock.patch.object(game.Player, 'play', lambda self: simple_func())

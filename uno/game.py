@@ -116,7 +116,7 @@ class Game:
             raw_bg = Image.open("uno/images/background.png")
         bg = Image.new('RGBA', (raw_bg.width, raw_bg.height))
         bg.paste(raw_bg, (0, 0))
-        bg.paste(self.last_card.get_img().rotate(15, expand = 1), (raw_bg.width // 2 - 200 - random.randint(-30, 30),
+        bg.paste(self.last_card.get_img().rotate(15, expand=1), (raw_bg.width // 2 - 200 - random.randint(-30, 30),
                                             raw_bg.height // 2 - 200 - random.randint(-30, 30)), self.last_card.get_img().rotate(15, expand = 1))
         bg.save("uno/images/playing_bg.png")
         temp = Image.open("uno/images/playing_bg.png")
