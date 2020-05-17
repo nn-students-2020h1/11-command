@@ -2,6 +2,7 @@ from uno.deck import Deck
 from uno.player import Player
 from uno.card import COLORS, SPECIAL_CARDS
 import random
+import os
 
 from telegram import Bot
 from PIL import Image
@@ -69,6 +70,7 @@ class Game:
     def play_card(self, card):
         self.deck.beaten(self.last_card)
         self.last_card = card
+        self.get_board(f"{self.current_player.name} played {card.color} {card.value} {card.special}!")
 
         if card.value == DRAW_TWO:
             self.draw_counter += 2
@@ -109,21 +111,30 @@ class Game:
         bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
         self.next_turn()
 
-    def get_board(self):
+    def get_board(self, message: str = None):
+        if self.round == 1:
+            try:
+                os.remove("uno/images/playing_bg.png")
+                os.remove("uno/images/playing_bg_tmp.jpg")
+            except FileNotFoundError:
+                pass
         try:
             raw_bg = Image.open("uno/images/playing_bg.png")
-        except:
+        except FileNotFoundError:
             raw_bg = Image.open("uno/images/background.png")
         bg = Image.new('RGBA', (raw_bg.width, raw_bg.height))
         bg.paste(raw_bg, (0, 0))
-        bg.paste(self.last_card.get_img().rotate(15, expand=1), (raw_bg.width // 2 - 200 - random.randint(-30, 30),
-                                            raw_bg.height // 2 - 200 - random.randint(-30, 30)), self.last_card.get_img().rotate(15, expand = 1))
+        angle = random.randint(-15, 15)
+        bg.paste(self.last_card.get_img().rotate(angle, expand=1.0),
+                 (raw_bg.width // 2 - 200 - random.randint(-50, 50),
+                  raw_bg.height // 2 - 200 - random.randint(-30, 30)),
+                 self.last_card.get_img().rotate(angle, expand=1.0))
         bg.save("uno/images/playing_bg.png")
         temp = Image.open("uno/images/playing_bg.png")
         tmp_c = temp.convert('RGB')
         tmp_c.save("uno/images/playing_bg_tmp.jpg")
-        bot.send_photo(chat_id=self.current_player.chat_id, photo=open("uno/images/playing_bg_tmp.jpg", mode='rb'))
-
+        bot.send_photo(chat_id=self.current_player.chat_id, photo=open("uno/images/playing_bg_tmp.jpg", mode='rb'),
+                       caption=message)
 
     @staticmethod
     def choose_color_static(current_game, color: COLORS) -> None:

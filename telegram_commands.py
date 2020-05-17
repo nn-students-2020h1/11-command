@@ -370,10 +370,9 @@ def uno_play_msg(chat_id: str, game: Game):
         bot.send_message(chat_id=chat_id, text=msg)
         temp_message = bot.send_message(chat_id=chat_id, text="Choose card by index:",
                                         reply_markup=game.current_player.deck_choose_keyboard())
-        game.get_board()
-        if game.round == 1:
+        '''if game.round == 1:
             bot.delete_message(chat_id, temp_message.message_id - 2)
             bot.delete_message(chat_id, temp_message.message_id - 3)
         else:
             for i in range(2, 5):
-                bot.delete_message(chat_id, temp_message.message_id - i)
+                bot.delete_message(chat_id, temp_message.message_id - i)'''

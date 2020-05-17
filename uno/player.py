@@ -60,8 +60,6 @@ class Player:
     def play(self, card=None):
         if self.is_human:
             if card.color == self.game.last_card.color or card.value == self.game.last_card.value or card.special:
-                bot.send_message(chat_id=self.chat_id,
-                                 text=f"You played card {card.color} {card.value} {card.special}")
                 self.cards.remove(card)
                 if self.cards.__len__() == 0:
                     bot.send_message(chat_id=self.chat_id, text="You won!")
@@ -74,8 +72,6 @@ class Player:
             if self.game.started:
                 for playable_card in self.cards:
                     if playable_card.color == self.game.last_card.color or playable_card.value == self.game.last_card.value or playable_card.special is not None:  # noqa: E501  # TODO: will fix this later
-                        bot.send_message(chat_id=self.chat_id,
-                                         text=f"{self.name} played card {playable_card.color} {playable_card.value} {playable_card.special}.")  # noqa: E501  # TODO: Cannot be reduced
                         self.cards.remove(playable_card)
                         self.game.play_card(playable_card)
 
