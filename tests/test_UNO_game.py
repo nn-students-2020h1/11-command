@@ -91,8 +91,10 @@ class TestGame(unittest.TestCase):
         self.game.add_player(player=self.player_1)
         self.game.add_player(player=self.player_2)
         self.game.draw_counter = 1
-        self.game.skip_next()
-        self.assertEqual(self.game.players[1].cards.__len__(), 8)
+        with mock.patch('telegram_commands.bot') as mock_bot:
+            mock_bot.send_message.return_value = None
+            self.game.skip_next()
+            self.assertEqual(self.game.players[1].cards.__len__(), 8)
 
     @mock.patch.object(game.Player, 'play', lambda self: simple_func())
     def test_play_card(self):
@@ -113,11 +115,6 @@ class TestGame(unittest.TestCase):
             self.game.add_player(player=self.player_1)
             self.game.choose_color(GREEN)
             self.assertIs(self.game.last_card.color, GREEN)
-
-    def test_get_board_no_file(self):
-        with mock.patch('os.remove', side_effect=FileNotFoundError):
-            with self.assertRaises(FileNotFoundError):
-                self.game.get_board()
 
     @mongomock.patch(servers=(('testserver.com', 27017),))
     def test_get_board(self):
