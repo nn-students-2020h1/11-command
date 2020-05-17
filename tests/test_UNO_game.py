@@ -7,7 +7,7 @@ from uno.game import Game
 from uno.player import Player
 
 
-def simple_func(chat_id=None, text=None):
+def simple_func(**kwargs):
     pass
 
 
@@ -53,13 +53,14 @@ class TestGame(unittest.TestCase):
 
     @mock.patch.object(game.Player, 'play', lambda self: simple_func())
     def test_play_card(self):
-        self.player_1 = Player(game=self.game, chat_id=0, is_human=False, name="John Doe")
-        self.player_2 = Player(game=self.game, chat_id=0, is_human=False, name="Bot 1")
-        self.game.add_player(player=self.player_1)
-        self.game.add_player(player=self.player_2)
-        self.last = self.game.last_card
-        self.game.play_card(self.game.last_card)
-        self.assertIn(self.last, self.game.deck.discard_pile)
+        with mock.patch('uno.game.Game.get_board', return_value = None):
+            self.player_1 = Player(game=self.game, chat_id=0, is_human=False, name="John Doe")
+            self.player_2 = Player(game=self.game, chat_id=0, is_human=False, name="Bot 1")
+            self.game.add_player(player=self.player_1)
+            self.game.add_player(player=self.player_2)
+            self.last = self.game.last_card
+            self.game.play_card(self.game.last_card)
+            self.assertIn(self.last, self.game.deck.discard_pile)
 
     @mock.patch.object(game.Player, 'play', lambda self: simple_func())
     def test_choose_color(self):
