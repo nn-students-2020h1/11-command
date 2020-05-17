@@ -1,12 +1,15 @@
 import unittest
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import patch, mock_open
 import pymongo
 import mongomock
 import database
 import telegram_commands
 import time
 import inline_handle
+
+def simple_func():
+    pass
 
 
 class TestFunctions(unittest.TestCase):
@@ -73,3 +76,14 @@ class TestFunctions(unittest.TestCase):
         self.db.db_user_actions = pymongo.MongoClient('testserver.com')['user_actions']
         with patch('auxiliary_functions.db_user_action', new=self.db):
             self.assertIsInstance(telegram_commands.command_recommendation(self.update, self.CallbackContext), str)
+
+    @patch("telegram_commands.json.load", mock.MagicMock({"location": "56.208975, 43.817691", "at_home": False, "blood": 2}))
+    @patch("telegram_commands.json.dump", mock.MagicMock(return_value='{data}'))
+    def test_calc_probability(self):
+        with patch('webdriver_manager.chrome.ChromeDriverManager.install', side_effect=simple_func()):
+            with patch('selenium.webdriver.Chrome', side_effect=simple_func()):
+                with patch("builtins.open", mock_open(read_data="data")) as mock_file:
+                    assert open("personal_0.json").read() == "data"
+                    mock_file.assert_called_with("personal_0.json")
+                    with patch("telegram_commands.BeautifulSoup", side_effect=simple_func()):
+                        self.assertEqual(telegram_commands.calc_probability(0), format(0.500000001, '.8f'))

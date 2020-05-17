@@ -16,7 +16,6 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from covid_stat import CovidRegionStat, CovidWorldStat
 from uno.game import Game
-from PIL import Image
 
 bot = Bot(
     token=TOKEN,
