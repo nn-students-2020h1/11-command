@@ -367,12 +367,6 @@ def uno_play_msg(chat_id: str, game: Game):
             msg += f"{player.name}: {player.cards.__len__()} cards\n"
         msg += f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:\n"  # noqa: E501  # TODO: will fix this later
         msg += game.current_player.view_deck()
-        bot.send_message(chat_id=chat_id, text=msg)
-        temp_message = bot.send_message(chat_id=chat_id, text="Choose card by index:",
-                                        reply_markup=game.current_player.deck_choose_keyboard())
-        '''if game.round == 1:
-            bot.delete_message(chat_id, temp_message.message_id - 2)
-            bot.delete_message(chat_id, temp_message.message_id - 3)
-        else:
-            for i in range(2, 5):
-                bot.delete_message(chat_id, temp_message.message_id - i)'''
+        game.temp_messages.append(game.temp_messages.append(bot.send_message(chat_id=chat_id, text=msg)))
+        game.temp_messages.append(bot.send_message(chat_id=chat_id, text="Choose card by index:",
+                                                   reply_markup=game.current_player.deck_choose_keyboard()))

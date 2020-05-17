@@ -361,6 +361,10 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             tg.GAME.next_turn()
 
         elif data.__len__() < 3:
+            for temp_msg in tg.GAME.temp_messages:
+                if temp_msg:
+                    bot.delete_message(chat_id=chat_id, message_id=temp_msg.message_id)
+            tg.GAME.temp_messages = []
             if tg.GAME.current_player.cards[int(data)].value == "draw_2" or tg.GAME.current_player.cards[int(data)].value == "skip":
                 tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])
                 '''if tg.GAME.current_player.is_human:

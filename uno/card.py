@@ -47,5 +47,5 @@ class Card:
             return Image.open(f"uno/images/{self.color}_skip.png")
         elif self.special == DRAW_FOUR:
             return Image.open("uno/images/draw_four.png")
-        elif self.last_card.special == CHOOSE_COLOR:
+        elif self.special == CHOOSE_COLOR:
             return Image.open("uno/images/choosecolor.png")

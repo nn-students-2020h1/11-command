@@ -29,6 +29,7 @@ class Game:
         self.players = list()
         self.last_card = None
         self.round = 1
+        self.temp_messages = []
 
         while not self.last_card or self.last_card.special:
             self.deck = Deck()
@@ -81,13 +82,13 @@ class Game:
             return None
         elif card.special == CHOOSE_COLOR:  # ADD INLINE COLOR KEYBOARD
             print("CHOOSING COLOR!")
-            bot.send_message(chat_id=self.current_player.chat_id, text="CHOOSING COLOR!")
+            self.temp_messages.append(bot.send_message(chat_id=self.current_player.chat_id, text="CHOOSING COLOR!"))
             if not self.current_player.is_human:
                 self.choose_color(random.choice(COLORS))
             else:
                 from inline_handle import InlineKeyboardFactory
-                bot.send_message(chat_id=self.current_player.chat_id, text="Choose color:",
-                                 reply_markup=InlineKeyboardFactory.get_inline_uno_choose_color())
+                self.temp_messages.append(bot.send_message(chat_id=self.current_player.chat_id, text="Choose color:",
+                                                           reply_markup=InlineKeyboardFactory.get_inline_uno_choose_color()))  # noqa E501
             return None
         elif card.special == DRAW_FOUR:
             self.draw_counter += 4
@@ -108,7 +109,8 @@ class Game:
     def choose_color(self, color: COLORS):
         self.last_card.color = color
         print(f"Chosen color {self.last_card.color}")
-        bot.send_message(chat_id=self.current_player.chat_id, text=f"Chosen color {self.last_card.color}")
+        self.temp_messages.append(bot.send_message(chat_id=self.current_player.chat_id,
+                                                   text=f"Chosen color {self.last_card.color}"))
         self.next_turn()
 
     def get_board(self, message: str = None):
@@ -133,12 +135,13 @@ class Game:
         temp = Image.open("uno/images/playing_bg.png")
         tmp_c = temp.convert('RGB')
         tmp_c.save("uno/images/playing_bg_tmp.jpg")
-        bot.send_photo(chat_id=self.current_player.chat_id, photo=open("uno/images/playing_bg_tmp.jpg", mode='rb'),
-                       caption=message)
+        self.temp_messages.append(bot.send_photo(chat_id=self.current_player.chat_id,
+                                                 photo=open("uno/images/playing_bg_tmp.jpg", mode='rb'),
+                                                 caption=message))
 
     @staticmethod
     def choose_color_static(current_game, color: COLORS) -> None:
         current_game.last_card.color = color
-        bot.send_message(chat_id=current_game.current_player.chat_id,
-                         text=f"Chosen color {current_game.last_card.color}")
+        current_game.temp_messages.append(bot.send_message(chat_id=current_game.current_player.chat_id,
+                                                           text=f"Chosen color {current_game.last_card.color}"))
         current_game.next_turn()
