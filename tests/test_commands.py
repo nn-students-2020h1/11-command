@@ -8,8 +8,16 @@ import telegram_commands
 import time
 import inline_handle
 
+
 def simple_func():
     pass
+
+
+def func_decor(func):
+    def inner(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return inner
 
 
 class TestFunctions(unittest.TestCase):
@@ -77,7 +85,8 @@ class TestFunctions(unittest.TestCase):
         with patch('auxiliary_functions.db_user_action', new=self.db):
             self.assertIsInstance(telegram_commands.command_recommendation(self.update, self.CallbackContext), str)
 
-    @patch("telegram_commands.json.load", mock.MagicMock({"location": "56.208975, 43.817691", "at_home": False, "blood": 2}))
+    @patch("telegram_commands.json.load",
+           mock.MagicMock({"location": "56.208975, 43.817691", "at_home": False, "blood": 2}))
     @patch("telegram_commands.json.dump", mock.MagicMock(return_value='{data}'))
     def test_calc_probability(self):
         with patch('webdriver_manager.chrome.ChromeDriverManager.install', side_effect=simple_func()):
@@ -87,3 +96,19 @@ class TestFunctions(unittest.TestCase):
                     mock_file.assert_called_with("personal_0.json")
                     with patch("telegram_commands.BeautifulSoup", side_effect=simple_func()):
                         self.assertEqual(telegram_commands.calc_probability(0), format(0.500000001, '.8f'))
+
+    '''@mongomock.patch(servers=(('testserver.com', 27017),))
+    def test_command_get_stat_in_region(self):
+        self.db.db_user_actions = pymongo.MongoClient('testserver.com')['user_actions']
+        with patch('auxiliary_functions.db_user_action', new=self.db):
+            with patch('covid_stat.CovidRegionStat') as mock_covid:
+                with patch('covid_stat.CovidRegionStat.get_list_of_regions', side_effect=simple_func()):
+                    with patch('covid_stat.CovidRegionStat.get_and_save_csv_table', side_effect=simple_func()):
+                        with patch('covid_stat.CovidRegionStat.get_plot_region', side_effect=simple_func()):
+                            with patch('telegram_commands.bot.send_photo', side_effect=simple_func()):
+                                self.update.message.text = "/stat Moscow"
+                                mock_covid.return_value = None
+                                mock_covid.get_list_of_regions.return_value = ["Moscow"]
+                                mock_covid.get_specific_region_href.return_value = None
+                                with patch("covid_stat.CovidRegionStat.get_list_of_regions", return_value=["Moscow"]):
+                                    telegram_commands.command_get_stat_in_region(self.update, self.CallbackContext)'''

@@ -201,9 +201,10 @@ def command_get_white_black_img(update: Update, context: CallbackContext):
 
 @handle_command
 def command_get_stat_in_region(update: Update, context: CallbackContext):
-    user_message = update.message['text']
+    user_message = update.message.text
     user_request = user_message.replace('/stat', '').strip()
     covid_request = CovidRegionStat()
+    print(covid_request.get_list_of_regions())
 
     if user_request in covid_request.get_list_of_regions():
         href = covid_request.get_specific_region_href(region_name=user_request)
