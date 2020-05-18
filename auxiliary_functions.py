@@ -10,7 +10,6 @@ bot = Bot(
     base_url=PROXY,  # delete it if connection via VPN
 )
 
-
 # USERS_ACTION = []
 # ACTION_COUNT = 0
 db_user_action = UserDataBase()
@@ -30,6 +29,7 @@ def handle_command(func):
             id_user = str(update.message.chat_id)
             db_user_action.add_user_action(id_user, user_action)
         return func(*args, **kwargs)
+
     return inner
 
 
@@ -61,6 +61,7 @@ def handle_image(func):
         func(*args, **kwargs)
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=open("result_user_images/res.jpg", mode='rb'))
+
     return inner
 
 

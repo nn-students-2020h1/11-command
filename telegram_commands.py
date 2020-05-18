@@ -16,7 +16,6 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from covid_stat import CovidRegionStat, CovidWorldStat
 from uno.game import Game
-from uno.player import Player
 
 bot = Bot(
     token=TOKEN,
@@ -38,6 +37,7 @@ def command_start(update: Update, context: CallbackContext):
     update.message.reply_text(f'Hi, {update.effective_user.first_name}!')
     update.message.reply_text('Please, type <b>/help</b> to see the list of commands.',
                               parse_mode=ParseMode.HTML)
+    return update.effective_user.first_name
 
 
 @handle_command
@@ -53,9 +53,11 @@ def command_chat_help(update: Update, context: CallbackContext):
                               "<b>/news</b> to see fresh news about COVID-19\n" +
                               "<b>/infected</b> to get the probability of you getting COVID-19\n" +
                               "<b>/recommendation</b> to get the recommendation about COVID-19\n" +
-                              "<b>/stat + your region</b> to get the covid_19 plot your region\n",
+                              "<b>/stat + your region</b> to get the covid_19 plot your region\n" +
+                              "<b>/uno</b> to play UNO game\n",
                               parse_mode=ParseMode.HTML
                               )
+    return "success"
 
 
 @handle_command
@@ -63,6 +65,7 @@ def command_echo(update: Update, context: CallbackContext):
     """Echo the user message."""
     response = handle_message(update.message.text)
     update.message.reply_text(response, parse_mode=ParseMode.HTML)
+    return response
 
 
 def get_quote(url: str):
@@ -91,6 +94,7 @@ def command_history(update: Update, context: CallbackContext):
         output += str(f"<b>function:</b> {action[1]}, <b>text</b>: {action[2]}, <b>time</b>: {action[3]}\n")
 
     update.message.reply_text(output, parse_mode=ParseMode.HTML)
+    return output
 
 
 @handle_command
@@ -108,6 +112,8 @@ def command_fact(update: Update, context: CallbackContext):
 def command_corona_stat(update: Update, context: CallbackContext):
     """This method is processing statistic's corona virus"""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+    user_message = update.message['text']
+    user_date = user_message.replace('/corona_stat', '').strip()
 
     user_message = update.message['text']
     user_date = user_message.replace('/corona_stat', '').strip()
@@ -142,6 +148,7 @@ def command_get_news(update: Update, context: CallbackContext):  # You can get f
     bot.send_message(chat_id=update.effective_message.chat_id,
                      text='Choose news',
                      reply_markup=inline_handle.InlineKeyboardFactory.get_inline_news_keyboard())
+    return inline_handle.InlineKeyboardFactory.get_inline_news_keyboard()
 
 
 @handle_command
@@ -159,6 +166,7 @@ def command_recommendation(update: Update, context: CallbackContext):
                            'Disinfect your mobile phone after going out',
                            'Do not drink alcohol - this contribute weaken the immune system']
     update.message.reply_text(random.choice(recommendation_list))
+    return random.choice(recommendation_list)
 
 
 @handle_command
@@ -193,9 +201,10 @@ def command_get_white_black_img(update: Update, context: CallbackContext):
 
 @handle_command
 def command_get_stat_in_region(update: Update, context: CallbackContext):
-    user_message = update.message['text']
+    user_message = update.message.text
     user_request = user_message.replace('/stat', '').strip()
     covid_request = CovidRegionStat()
+    print(covid_request.get_list_of_regions())
 
     if user_request in covid_request.get_list_of_regions():
         href = covid_request.get_specific_region_href(region_name=user_request)
@@ -351,10 +360,13 @@ def uno_game_handler(update: Update, chat_id: str, players: list, game: Game):
 
 
 def uno_play_msg(chat_id: str, game: Game):
-    players = game.players
-    bot.send_message(chat_id=chat_id, text=f"Your turn! Boss has {players[1].cards.__len__()} cards...")
-    bot.send_message(chat_id=chat_id,
-                     text=f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:")  # noqa: E501  # TODO: will fix this later
-    bot.send_message(chat_id=chat_id, text=players[0].view_deck())
-    bot.send_message(chat_id=chat_id, text="Choose card by index:",
-                     reply_markup=game.current_player.deck_choose_keyboard())
+    if not game.current_player.cards.__len__() == 0:
+        players = game.players
+        msg = ""
+        for player in players:
+            msg += f"{player.name}: {player.cards.__len__()} cards\n"
+        msg += f"Play the special card or {game.last_card.color} card or value {game.last_card.value} card. Type X for draw. Your deck:\n"  # noqa: E501  # TODO: will fix this later
+        msg += game.current_player.view_deck()
+        game.temp_messages.append(game.temp_messages.append(bot.send_message(chat_id=chat_id, text=msg)))
+        game.temp_messages.append(bot.send_message(chat_id=chat_id, text="Choose card by index:",
+                                                   reply_markup=game.current_player.deck_choose_keyboard()))

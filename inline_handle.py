@@ -10,6 +10,7 @@ from covid_news import CovidNews
 from lxml import html
 from uno.player import Player
 from uno.game import Game
+from uno.card import RED, GREEN, BLUE, YELLOW
 
 """Buttons' identifiers for keyboard callback data"""
 CALLBACK_BUTTON_01 = "callback_increase_01"
@@ -34,8 +35,13 @@ CALLBACK_BUTTON_BLOOD_II = "callback_blood_II"
 CALLBACK_BUTTON_BLOOD_III = "callback_blood_III"
 CALLBACK_BUTTON_BLOOD_IV = "callback_blood_IV"
 
-CALLBACK_BUTTON_UNO_BOT = "callback_uno_bot"
+CALLBACK_BUTTON_UNO_BOT_1 = "callback_uno_bot_1"
+CALLBACK_BUTTON_UNO_BOT_2 = "callback_uno_bot_2"
 CALLBACK_BUTTON_UNO_DRAW_ONE = "callback_uno_draw_one"
+CALLBACK_BUTTON_UNO_RED = "callback_uno_red"
+CALLBACK_BUTTON_UNO_GREEN = "callback_uno_green"
+CALLBACK_BUTTON_UNO_BLUE = "callback_uno_blue"
+CALLBACK_BUTTON_UNO_YELLOW = "callback_uno_yellow"
 
 bot = Bot(
     token=TOKEN,
@@ -46,7 +52,7 @@ Covid = CovidNews()
 
 class InlineKeyboardFactory:  # provides all inline keyboards
     @staticmethod
-    def get_inline_contrast_keyboard():  # keyboard for image contrast level
+    def get_inline_contrast_keyboard() -> InlineKeyboardMarkup:  # keyboard for image contrast level
         """Get custom inline keyboard for modifying contrast of an image"""
 
         keyboard = [
@@ -65,7 +71,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_coronavirus_keyboard():  # keyboard for /corona_stat
+    def get_inline_coronavirus_keyboard() -> InlineKeyboardMarkup:  # keyboard for /corona_stat
         """Get custom inline keyboard for coronavirus stats"""
         keyboard = [
             [
@@ -75,7 +81,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_news_keyboard():  # Get three news buttons
+    def get_inline_news_keyboard() -> InlineKeyboardMarkup:  # Get three news buttons
         Covid.shuffle_news()
         keyboard = [
             [
@@ -101,7 +107,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_keyboard_more_information():
+    def get_inline_keyboard_more_information() -> InlineKeyboardMarkup:
         keyboard = [
             [
                 InlineKeyboardButton("Read more in source",
@@ -116,7 +122,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_stayhome():
+    def get_inline_stayhome() -> InlineKeyboardMarkup:
         """Get custom inline keyboard for coronavirus infection probability"""
         keyboard = [
             [
@@ -127,7 +133,7 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_bloodtype():
+    def get_inline_bloodtype() -> InlineKeyboardMarkup:
         keyboard = [
             [
                 InlineKeyboardButton("I (0)", callback_data=CALLBACK_BUTTON_BLOOD_I)
@@ -148,10 +154,31 @@ class InlineKeyboardFactory:  # provides all inline keyboards
         return InlineKeyboardMarkup(keyboard)
 
     @staticmethod
-    def get_inline_uno_choose_player():
+    def get_inline_uno_choose_player() -> InlineKeyboardMarkup:
         keyboard = [
             [
-                InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT)
+                InlineKeyboardButton("Boss", callback_data=CALLBACK_BUTTON_UNO_BOT_1)
+            ],
+            [
+                InlineKeyboardButton("Two bosses!", callback_data=CALLBACK_BUTTON_UNO_BOT_2)
+            ]
+        ]
+        return InlineKeyboardMarkup(keyboard)
+
+    @staticmethod
+    def get_inline_uno_choose_color() -> InlineKeyboardMarkup:
+        keyboard = [
+            [
+                InlineKeyboardButton("RED 🟥", callback_data=CALLBACK_BUTTON_UNO_RED)
+            ],
+            [
+                InlineKeyboardButton("GREEN 🟩", callback_data=CALLBACK_BUTTON_UNO_GREEN)
+            ],
+            [
+                InlineKeyboardButton("BLUE 🟦", callback_data=CALLBACK_BUTTON_UNO_BLUE)
+            ],
+            [
+                InlineKeyboardButton("YELLOW 🟨", callback_data=CALLBACK_BUTTON_UNO_YELLOW)
             ]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -168,56 +195,51 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             json.dump(data, handle, ensure_ascii=False, indent=2)
         return file, add_data
 
-    @staticmethod  # noqa: C901  # TODO: it works, so I don't wanna to ruin it
+    @staticmethod
+    def change_contrast_level(factor: float, base_img: str, res_img: str, chat_id, send: str):
+        img_h.get_contrast_img(factor=factor, base_img=base_img, res_img=res_img)
+        # replace the existing image with an enhanced one
+        temp_message = bot.send_photo(chat_id=chat_id, photo=open(send, mode='rb'),
+                                      reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
+        bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+
+    @staticmethod  # noqa: C901  # TODO: it works, so I don't wanna ruin it
     def handle_keyboard_callback(update: Update, context=None):  # Gets callback_data from the pushed button
         query = update.callback_query  # Gets query from callback
         data = query.data  # callback_data of pushed button
         chat_id = update.effective_message.chat_id  # chat id for sending messages
 
         if data == CALLBACK_BUTTON_01:
-            img_h.get_contrast_img(0.1, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=0.1, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
             return CALLBACK_BUTTON_01
 
         elif data == CALLBACK_BUTTON_05:
-            img_h.get_contrast_img(0.5, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace the existing image with an enhanced one
-            temp_message = bot.send_photo(chat_id=chat_id, photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=0.5, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
+            return CALLBACK_BUTTON_05
 
         elif data == CALLBACK_BUTTON_m01:
-            img_h.get_contrast_img(-0.1, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace existing image with an enhanced one
-
-            temp_message = bot.send_photo(chat_id=chat_id,
-                                          photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=-0.1, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
+            return CALLBACK_BUTTON_m01
 
         elif data == CALLBACK_BUTTON_m05:
-            img_h.get_contrast_img(-0.5, 'initial_user_images/initial.jpg',
-                                   'initial_user_images/initial.jpg')  # replace existing image with an enhanced one
-
-            temp_message = bot.send_photo(chat_id=chat_id,
-                                          photo=open('initial_user_images/initial.jpg', mode='rb'),
-                                          reply_markup=InlineKeyboardFactory.get_inline_contrast_keyboard())
-            bot.delete_message(chat_id, temp_message.message_id - 1)  # deletes previous message with an old image
+            InlineCallback.change_contrast_level(factor=-0.5, base_img='initial_user_images/initial.jpg',
+                                                 res_img='initial_user_images/initial.jpg', chat_id=chat_id,
+                                                 send='initial_user_images/initial.jpg')
+            return CALLBACK_BUTTON_m05
 
         elif data == CALLBACK_BUTTON_FIN:
-            img_h.get_contrast_img(0.0, 'initial_user_images/initial.jpg',
-                                   'result_user_images/res.jpg')  # get final result after editing
-            final_message = bot.send_photo(chat_id=chat_id,
-                                           photo=open("result_user_images/res.jpg", mode='rb'))
-            bot.delete_message(chat_id, final_message.message_id - 1)  # deletes previous message with an old image
-
+            InlineCallback.change_contrast_level(factor=0.0, base_img='initial_user_images/initial.jpg',
+                                                 res_img='result_user_images/res.jpg', chat_id=chat_id,
+                                                 send='result_user_images/res.jpg')
             reply_markup = ReplyKeyboardRemove()  # Remove keyboard
             bot.send_message(chat_id=chat_id,
-                             text='Upload new image',
+                             text='Here you are!',
                              reply_markup=reply_markup)
 
         elif data == CALLBACK_BUTTON_COVID19_RU:
@@ -311,7 +333,7 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
             bot.send_message(chat_id=chat_id,
                              text=f"The probability of you getting COVID-19 is around {tg.calc_probability(chat_id)}%")
 
-        elif data == CALLBACK_BUTTON_UNO_BOT:
+        elif data == CALLBACK_BUTTON_UNO_BOT_1:
             game = Game()
             tg.GAME = game
             tg.CHAT_ID = chat_id
@@ -321,11 +343,28 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                                                                                 game=game, is_human=False,
                                                                                 name='Boss')], game=game)
 
+        elif data == CALLBACK_BUTTON_UNO_BOT_2:
+            game = Game()
+            tg.GAME = game
+            tg.CHAT_ID = chat_id
+            tg.uno_game_handler(update=update, chat_id=chat_id, players=[Player(chat_id=chat_id,
+                                                                                game=game, is_human=True, name='You'),
+                                                                         Player(chat_id=chat_id,
+                                                                                game=game, is_human=False,
+                                                                                name='Boss Intel'),
+                                                                         Player(chat_id=chat_id,
+                                                                                game=game, is_human=False,
+                                                                                name='Boss AMD')], game=game)
+
         elif data == CALLBACK_BUTTON_UNO_DRAW_ONE:
             tg.GAME.current_player.draw()
             tg.GAME.next_turn()
 
         elif data.__len__() < 3:
+            for temp_msg in tg.GAME.temp_messages:
+                if temp_msg:
+                    bot.delete_message(chat_id=chat_id, message_id=temp_msg.message_id)
+            tg.GAME.temp_messages = []
             if tg.GAME.current_player.cards[int(data)].value == "draw_2" or tg.GAME.current_player.cards[int(data)].value == "skip":
                 tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])
                 '''if tg.GAME.current_player.is_human:
@@ -334,3 +373,15 @@ class InlineCallback:  # Processes the events on inline keyboards' buttons
                     tg.GAME.current_player.play()'''
             else:
                 tg.GAME.current_player.play(tg.GAME.current_player.cards[int(data)])
+
+        elif data == CALLBACK_BUTTON_UNO_RED:
+            tg.GAME.choose_color_static(tg.GAME, RED)
+
+        elif data == CALLBACK_BUTTON_UNO_GREEN:
+            tg.GAME.choose_color_static(tg.GAME, GREEN)
+
+        elif data == CALLBACK_BUTTON_UNO_BLUE:
+            tg.GAME.choose_color_static(tg.GAME, BLUE)
+
+        elif data == CALLBACK_BUTTON_UNO_YELLOW:
+            tg.GAME.choose_color_static(tg.GAME, YELLOW)

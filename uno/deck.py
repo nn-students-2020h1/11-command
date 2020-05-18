@@ -23,7 +23,7 @@ class Deck:
     def shuffle_cards(self):
         shuffle(self.cards)
 
-    def get_card(self):
+    def get_card(self) -> Card:
         try:
             card = self.cards.pop()
             return card

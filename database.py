@@ -13,10 +13,7 @@ class UserDataBase:
         self.db_user_actions[user_id].insert_one(user_action)
 
     def get_user_actions(self, user_id: str) -> list:
-        actions = []
-        for action in self.db_user_actions[user_id].find():
-            actions.append([action['user_name'], action['function'], action['text'], action['time']])
-        return actions
+        return [[action['user_name'], action['function'], action['text'], action['time']] for action in self.db_user_actions[user_id].find()]
 
 
 class CsvDataBase:
@@ -25,12 +22,12 @@ class CsvDataBase:
         self.client = pymongo.MongoClient()
         self.db_covid_csv = self.client['covid_csv']
 
-    def check_exist_dates(self, date: str):
+    def check_exist_dates(self, date: str) -> bool:
         if self.db_covid_csv[date].find_one() is None:
             return False
         return True
 
-    def get_csv_from_db(self, date: str):
+    def get_csv_from_db(self, date: str) -> dict:
         csv_content = self.db_covid_csv[date].find_one()
         del csv_content['_id']
         return csv_content
@@ -39,7 +36,7 @@ class CsvDataBase:
         try:
             s = pandas.read_csv("https://raw.githubusercontent.com/"
                                 "CSSEGISandData/COVID-19/master/csse_covid_19_data/"
-                                 f"csse_covid_19_daily_reports/{date}.csv")
+                                f"csse_covid_19_daily_reports/{date}.csv")
         except:
             raise Exception("Such date doesn't exist")
         csv_dict = s.to_dict()

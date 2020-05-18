@@ -25,7 +25,7 @@ class Player:
             for card in self.cards:
                 self.game.deck.beaten(card)
 
-    def view_deck(self):
+    def view_deck(self) -> str:
         index = 0
         msg = ""
         for playable_card in self.cards:
@@ -33,12 +33,14 @@ class Player:
             index += 1
         return msg
 
-    def deck_choose_keyboard(self):
+    def deck_choose_keyboard(self) -> InlineKeyboardMarkup:
         index = 0
         keyboard = []
         for playable_card in self.cards:
-            button = InlineKeyboardButton(index, callback_data=index)
-            keyboard.append([button])
+            if playable_card.color == self.game.last_card.color or playable_card.value == self.game.last_card.value or playable_card.special:  # noqa: E501  # TODO: if statement's length cannot be reduced
+                button = InlineKeyboardButton(f"{index}. {playable_card.color}, {playable_card.value}, {playable_card.special}",  # noqa: E501
+                                              callback_data=index)
+                keyboard.append([button])
             index += 1
         keyboard.append([InlineKeyboardButton("DRAW ONE", callback_data="callback_uno_draw_one")])
         return InlineKeyboardMarkup(keyboard)
@@ -58,27 +60,24 @@ class Player:
     def play(self, card=None):
         if self.is_human:
             if card.color == self.game.last_card.color or card.value == self.game.last_card.value or card.special:
-                bot.send_message(chat_id=self.chat_id,
-                                 text=f"You played card {card.color} {card.value} {card.special}")
                 self.cards.remove(card)
-                self.game.play_card(card)
-
                 if self.cards.__len__() == 0:
                     bot.send_message(chat_id=self.chat_id, text="You won!")
                     self.game.started = False
+                self.game.play_card(card)
+
             else:
                 raise WrongCardError
         else:
-            for playable_card in self.cards:
-                if playable_card.color == self.game.last_card.color or playable_card.value == self.game.last_card.value or playable_card.special is not None:  # noqa: E501  # TODO: will fix this later
-                    bot.send_message(chat_id=self.chat_id,
-                                     text=f"{self.name} played card {playable_card.color} {playable_card.value} {playable_card.special}.")
-                    self.cards.remove(playable_card)
-                    self.game.play_card(playable_card)
+            if self.game.started:
+                for playable_card in self.cards:
+                    if playable_card.color == self.game.last_card.color or playable_card.value == self.game.last_card.value or playable_card.special is not None:  # noqa: E501  # TODO: will fix this later
+                        self.cards.remove(playable_card)
+                        self.game.play_card(playable_card)
 
-                    if self.cards.__len__() == 0:
-                        bot.send_message(chat_id=self.chat_id, text=f"{self.name} won!")
-                        self.game.started = False
-                    return None
-            self.draw()
-            self.game.next_turn()
+                        if self.cards.__len__() == 0:
+                            bot.send_message(chat_id=self.chat_id, text=f"{self.name} won!")
+                            self.game.started = False
+                        return None
+                self.draw()
+                self.game.next_turn()
