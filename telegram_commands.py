@@ -115,12 +115,9 @@ def command_corona_stat(update: Update, context: CallbackContext):
     user_message = update.message['text']
     user_date = user_message.replace('/corona_stat', '').strip()
 
-    user_message = update.message['text']
-    user_date = user_message.replace('/corona_stat', '').strip()
-
     top_province = CovidWorldStat()
 
-    top_province.set_date(days_ago=1)
+    top_province.set_date(days_ago=2)
     if user_date:
         try:
             top_province.set_user_date(user_date)
@@ -131,6 +128,7 @@ def command_corona_stat(update: Update, context: CallbackContext):
                              text=str(ex))
             return None
 
+    top_province.set_data_frame()
     top_covid_places = top_province.get_difference_disease(top=5)
     top_places_message = ''
     for place in top_covid_places:
