@@ -7,7 +7,7 @@ import json
 
 bot = Bot(
     token=TOKEN,
-    base_url=PROXY,  # delete it if connection via VPN
+    #base_url=PROXY,  # delete it if connection via VPN
 )
 
 # USERS_ACTION = []

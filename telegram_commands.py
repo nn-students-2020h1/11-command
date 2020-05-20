@@ -204,30 +204,31 @@ def command_get_stat_in_region(update: Update, context: CallbackContext):
     user_message = update.message.text
     user_request = user_message.replace('/stat', '').strip()
     covid_request = CovidRegionStat()
-    print(covid_request.get_list_of_regions())
 
-    if user_request in covid_request.get_list_of_regions():
-        href = covid_request.get_specific_region_href(region_name=user_request)
-        covid_request.get_and_save_csv_table(href_by_region=href, user_id=update.message.chat_id)
-        covid_request.get_plot_region()
-        bot.send_photo(chat_id=update.effective_message.chat_id,
-                       photo=open(covid_request.get_path_to_plot_file(), mode='rb'))
-    else:
+    if user_request not in covid_request.get_list_of_regions():
         one_vector = covid_request.transform_into_np_vector(user_request)
         two_vector = covid_request.get_result_alphabet()
         s = covid_request.get_cosine(one_vector, two_vector)
         s = sorted(s, key=lambda x: x[1])
-        output = ''
+        user_request = ''
         epsilon = 0.350
-        for i in s[:2]:
+        for i in s[:1]:
             if i[1] <= epsilon:
-                output += str(covid_request.get_specific_region_by_index(i[0])) + '\n'
+                user_request += str(covid_request.get_specific_region_by_index(i[0]))
 
-        if output == '':
+        if user_request == '':
             for i in covid_request.get_list_of_regions():
-                output += str(i) + '\n'
+                user_request += str(i) + '\n'
+            bot.send_message(chat_id=update.effective_message.chat_id,
+                             text=user_request)
         #
-        update.message.reply_text(f"Maybe: \n{str(output)}")
+    href = covid_request.get_specific_region_href(region_name=user_request)
+    covid_request.get_and_save_csv_table(href_by_region=href, user_id=update.message.chat_id)
+    covid_request.get_plot_region()
+    bot.send_message(chat_id=update.effective_message.chat_id,
+                     text=user_request)
+    bot.send_photo(chat_id=update.effective_message.chat_id,
+                   photo=open(covid_request.get_path_to_plot_file(), mode='rb'))
 
 
 def command_handle_contrast(update: Update, context=None):

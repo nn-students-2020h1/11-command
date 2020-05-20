@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 bot = Bot(
     token=TOKEN,
-    base_url=PROXY,  # delete it if connection via VPN
+    #base_url=PROXY,  # delete it if connection via VPN
 )
 
 

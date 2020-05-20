@@ -5,7 +5,7 @@ import json
 import telegram_commands as tg
 
 from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
-from setup import TOKEN
+from setup import TOKEN, PROXY
 from covid_news import CovidNews
 from lxml import html
 from uno.player import Player
@@ -45,6 +45,7 @@ CALLBACK_BUTTON_UNO_YELLOW = "callback_uno_yellow"
 
 bot = Bot(
     token=TOKEN,
+    #base_url=PROXY,  # delete it if connection via VPN
 )
 
 Covid = CovidNews()

@@ -122,6 +122,7 @@ class CovidRegionStat:
         date = df['Date'][::-1]
         confirmed = df['Confirmed'][::-1]
         new_confirmed = df['New_confirmed'][::-1]
+        plt.cla()
         plt.xlabel("Time")
         plt.ylabel("Confirmed")
         plt.grid(which="major", linewidth=1)
@@ -129,7 +130,7 @@ class CovidRegionStat:
         plt.plot(date, confirmed, 'bo')
         plt.plot(date, new_confirmed, label="New confirmed for day")
         plt.legend()
-        self._path_plot_file = f'corona_information/{self._name_data_frame}_{self._user_id_file}.jpg'
+        self._path_plot_file = f'corona_information/{str(self._name_data_frame)}_{str(self._user_id_file)}.jpg'
         plt.savefig(self._path_plot_file)
 
 
